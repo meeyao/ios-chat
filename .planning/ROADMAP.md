@@ -22,8 +22,8 @@ This roadmap targets a full parity port of DankChat to iOS/Swift. The parity che
 **Plans:** 2 plans
 
 Plans:
-- [ ] 01-01-PLAN.md — OAuth login + token storage + app wiring
-- [ ] 01-02-PLAN.md — IRC connectivity supervisor, rate limiting, lifecycle resilience
+- [x] 01-01-PLAN.md — OAuth login + token storage + app wiring
+- [x] 01-02-PLAN.md — IRC connectivity supervisor, rate limiting, lifecycle resilience
 
 **Success Criteria:**
 1. OAuth login + token persistence works reliably.
@@ -41,6 +41,13 @@ Plans:
 **Dependencies:** Phase 1
 
 **Scope:** IRC parsing, message models, timeline rendering, timestamps, link handling, basic settings (timestamps/usernames/scrollback), send/receive, system messages.
+
+**Plans:** 3 plans (1/3 complete)
+
+Plans:
+- [x] 02-01-PLAN.md — IRCv3 message parser with tag unescape
+- [ ] 02-02-PLAN.md — Chat domain models + mapping + session wiring
+- [ ] 02-03-PLAN.md — Single-channel chat UI + composer + link handling
 
 **Success Criteria:**
 1. Messages render with correct username, content, timestamp, and link handling.
@@ -158,7 +165,7 @@ Plans:
 | Phase | Status | Completion |
 |-------|--------|------------|
 | Phase 1: Foundation (Auth + Connectivity) | In Progress | 0% |
-| Phase 2: Core Chat Pipeline | Pending | 0% |
+| Phase 2: Core Chat Pipeline | In Progress | 33% |
 | Phase 3: Multi-Channel Navigation | Pending | 0% |
 | Phase 4: Emotes + Badges Ecosystem | Pending | 0% |
 | Phase 5: Social + Moderation | Pending | 0% |
