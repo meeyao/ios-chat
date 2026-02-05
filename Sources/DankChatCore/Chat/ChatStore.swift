@@ -7,9 +7,16 @@ public final class ChatStore: ObservableObject {
     private let settings: ChatSettings
     private var messageIds: [String] = []
     private var messageIdSet: Set<String> = []
+    private var cancellables: Set<AnyCancellable> = []
 
     public init(settings: ChatSettings) {
         self.settings = settings
+        settings.$scrollbackLimit
+            .removeDuplicates()
+            .sink { [weak self] _ in
+                self?.trimToScrollbackLimit()
+            }
+            .store(in: &cancellables)
     }
 
     public func append(event: ChatEvent) {
