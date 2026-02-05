@@ -42,12 +42,12 @@ Plans:
 
 **Scope:** IRC parsing, message models, timeline rendering, timestamps, link handling, basic settings (timestamps/usernames/scrollback), send/receive, system messages.
 
-**Plans:** 3 plans (2/3 complete)
+**Plans:** 3 plans (3/3 complete)
 
 Plans:
 - [x] 02-01-PLAN.md — IRCv3 message parser with tag unescape
 - [x] 02-02-PLAN.md — Chat domain models + mapping + session wiring
-- [ ] 02-03-PLAN.md — Single-channel chat UI + composer + link handling
+- [x] 02-03-PLAN.md — Single-channel chat UI + composer + link handling
 
 **Success Criteria:**
 1. Messages render with correct username, content, timestamp, and link handling.
@@ -165,7 +165,7 @@ Plans:
 | Phase | Status | Completion |
 |-------|--------|------------|
 | Phase 1: Foundation (Auth + Connectivity) | In Progress | 0% |
-| Phase 2: Core Chat Pipeline | In Progress | 33% |
+| Phase 2: Core Chat Pipeline | Complete | 100% |
 | Phase 3: Multi-Channel Navigation | Pending | 0% |
 | Phase 4: Emotes + Badges Ecosystem | Pending | 0% |
 | Phase 5: Social + Moderation | Pending | 0% |
