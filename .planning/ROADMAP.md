@@ -42,11 +42,11 @@ Plans:
 
 **Scope:** IRC parsing, message models, timeline rendering, timestamps, link handling, basic settings (timestamps/usernames/scrollback), send/receive, system messages.
 
-**Plans:** 3 plans (1/3 complete)
+**Plans:** 3 plans (2/3 complete)
 
 Plans:
 - [x] 02-01-PLAN.md — IRCv3 message parser with tag unescape
-- [ ] 02-02-PLAN.md — Chat domain models + mapping + session wiring
+- [x] 02-02-PLAN.md — Chat domain models + mapping + session wiring
 - [ ] 02-03-PLAN.md — Single-channel chat UI + composer + link handling
 
 **Success Criteria:**
