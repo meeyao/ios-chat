@@ -44,6 +44,8 @@ public struct ChatMessageMapper {
         let (text, isAction) = Self.parseAction(from: rawText)
         let displayName = Self.displayName(from: message)
         let login = Self.login(from: message, fallback: displayName)
+        let twitchEmotes = TwitchEmoteTagParser.parse(Self.tagValue("emotes", in: message), in: text)
+        let badgeTags = TwitchBadgeTagParser.parse(Self.tagValue("badges", in: message))
         let user = ChatUser(
             id: Self.tagValue("user-id", in: message),
             displayName: displayName,
@@ -60,7 +62,9 @@ public struct ChatMessageMapper {
             receivedAt: receivedAt,
             latencyMs: latencyMs,
             isAction: isAction,
-            channel: channel
+            channel: channel,
+            twitchEmotes: twitchEmotes,
+            badgeTags: badgeTags
         )
         return .message(chatMessage)
     }
