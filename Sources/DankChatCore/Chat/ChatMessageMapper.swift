@@ -45,7 +45,7 @@ public struct ChatMessageMapper {
         let displayName = Self.displayName(from: message)
         let login = Self.login(from: message, fallback: displayName)
         let user = ChatUser(
-            id: nil,
+            id: Self.tagValue("user-id", in: message),
             displayName: displayName,
             login: login,
             color: Self.tagValue("color", in: message)
