@@ -21,17 +21,28 @@ public enum ChatEvent: Equatable {
             return nil
         }
     }
+
+    public var channel: String? {
+        switch self {
+        case .message(let message):
+            return message.channel
+        case .system(let message):
+            return message.channel
+        }
+    }
 }
 
 public struct SystemMessage: Equatable {
     public let text: String
     public let timestamp: Date
     public let kind: SystemMessageKind
+    public let channel: String?
 
-    public init(text: String, timestamp: Date, kind: SystemMessageKind) {
+    public init(text: String, timestamp: Date, kind: SystemMessageKind, channel: String?) {
         self.text = text
         self.timestamp = timestamp
         self.kind = kind
+        self.channel = channel
     }
 }
 

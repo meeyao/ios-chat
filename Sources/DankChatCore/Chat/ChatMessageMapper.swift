@@ -71,9 +71,10 @@ public struct ChatMessageMapper {
         receivedAt: Date,
         serverTimestamp: Date?
     ) -> ChatEvent? {
+        let channel = message.params.first.map { Self.normalizeChannel($0) }
         let text = message.params.last ?? ""
         let timestamp = serverTimestamp ?? receivedAt
-        return .system(SystemMessage(text: text, timestamp: timestamp, kind: kind))
+        return .system(SystemMessage(text: text, timestamp: timestamp, kind: kind, channel: channel))
     }
 
     private static func tagValue(_ key: String, in message: IRCMessage) -> String? {

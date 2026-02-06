@@ -74,7 +74,7 @@ struct ChatTimelineView: View {
 #Preview {
     let settings = ChatSettings()
     let store = ChatStore(settings: settings)
-    store.append(event: .system(SystemMessage(text: "Connected", timestamp: Date(), kind: .notice)))
+    store.append(event: .system(SystemMessage(text: "Connected", timestamp: Date(), kind: .notice, channel: nil)))
     store.append(event: .message(ChatMessage(
         id: "1",
         user: ChatUser(displayName: "kappa", login: "kappa"),
