@@ -66,12 +66,14 @@ Plans:
 
 **Scope:** Channel list, add/remove, rename, tabs, per-channel unread/mention counts, connection status per channel.
 
-**Plans:** 3 plans (2/3 complete)
+**Plans:** 3 plans (3/3 complete)
+
+**Completion:** 2026-02-06
 
 Plans:
 - [x] 03-01-PLAN.md — Channel models + per-channel store + IRC routing
 - [x] 03-02-PLAN.md — Channel switcher UI + management + app shell wiring
-- [ ] 03-03-PLAN.md — Unread/mention indicators + scroll state preservation
+- [x] 03-03-PLAN.md — Unread/mention indicators + scroll state preservation
 
 **Success Criteria:**
 1. Users can join, rename, and remove channels.
@@ -173,14 +175,14 @@ Plans:
 |-------|--------|------------|
 | Phase 1: Foundation (Auth + Connectivity) | In Progress | 0% |
 | Phase 2: Core Chat Pipeline | Complete | 100% |
-| Phase 3: Multi-Channel Navigation | In Progress | 67% |
+| Phase 3: Multi-Channel Navigation | Complete | 100% |
 | Phase 4: Emotes + Badges Ecosystem | Pending | 0% |
 | Phase 5: Social + Moderation | Pending | 0% |
 | Phase 6: Highlights + Notifications | Pending | 0% |
 | Phase 7: Streams + Tools | Pending | 0% |
 | Phase 8: Settings + Polish | Pending | 0% |
 
-**Overall Progress:** 13%
+**Overall Progress:** 25%
 
 ## Dependency Graph
 
