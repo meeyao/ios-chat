@@ -94,6 +94,9 @@ private struct ContentView: View {
         }
         .onChange(of: channelStore.activeChannelId) { _, newValue in
             storedActiveChannelId = newValue
+            if let id = newValue {
+                channelStore.markChannelRead(channelId: id)
+            }
         }
         .onChange(of: connectionStore.state) { _, _ in
             syncConnectionStates()
@@ -165,7 +168,9 @@ private struct ContentView: View {
             ChannelTabStripView(
                 store: channelStore,
                 selection: activeChannelBinding,
-                connectionState: { _ in connectionStore.state },
+                connectionState: { channel in
+                    channelStore.state(for: channel.id)?.connectionState ?? .disconnected(reason: nil)
+                },
                 onRename: handleRename,
                 onRemove: handleRemove,
                 onTogglePin: { channel in
@@ -197,7 +202,9 @@ private struct ContentView: View {
                 ChannelListView(
                     store: channelStore,
                     selection: activeChannelBinding,
-                    connectionState: { _ in connectionStore.state },
+                    connectionState: { channel in
+                        channelStore.state(for: channel.id)?.connectionState ?? .disconnected(reason: nil)
+                    },
                     onRename: handleRename,
                     onRemove: handleRemove,
                     onTogglePin: { channel in
@@ -287,8 +294,20 @@ private struct ContentView: View {
     private func channelDetail(for channel: Channel) -> some View {
         let store = channelStore.store(for: channel.id)
         return VStack(spacing: 12) {
-            ChatTimelineView(store: store, settings: chatSettings)
-                .frame(minHeight: 240)
+            ChatTimelineView(
+                store: store,
+                settings: chatSettings,
+                isAtBottom: isAtBottomBinding(for: channel.id),
+                lastReadMessageId: lastReadBinding(for: channel.id)
+            )
+            .onChange(of: store.entries.count) { _, _ in
+                guard let event = store.entries.last else { return }
+                channelStore.recordIncomingEvent(
+                    channelId: channel.id,
+                    isMention: isMention(event)
+                )
+            }
+            .frame(minHeight: 240)
             ChatComposerView(
                 connectionStore: connectionStore,
                 session: chatSession,
@@ -308,7 +327,36 @@ private struct ContentView: View {
             set: { newValue in
                 guard let id = newValue else { return }
                 channelStore.setActive(id: id)
+                channelStore.markChannelRead(channelId: id)
                 storedActiveChannelId = id
+            }
+        )
+    }
+
+    private func isAtBottomBinding(for channelId: String) -> Binding<Bool> {
+        Binding(
+            get: { channelStore.state(for: channelId)?.isAtBottom ?? true },
+            set: { newValue in
+                let lastRead = channelStore.state(for: channelId)?.lastReadMessageId
+                channelStore.updateScrollState(
+                    channelId: channelId,
+                    isAtBottom: newValue,
+                    lastReadMessageId: lastRead
+                )
+            }
+        )
+    }
+
+    private func lastReadBinding(for channelId: String) -> Binding<String?> {
+        Binding(
+            get: { channelStore.state(for: channelId)?.lastReadMessageId },
+            set: { newValue in
+                let isAtBottom = channelStore.state(for: channelId)?.isAtBottom ?? true
+                channelStore.updateScrollState(
+                    channelId: channelId,
+                    isAtBottom: isAtBottom,
+                    lastReadMessageId: newValue
+                )
             }
         )
     }
@@ -342,10 +390,16 @@ private struct ContentView: View {
     }
 
     private func syncConnectionStates() {
-        for channel in channelStore.channels {
-            var state = channelStore.state(for: channel.id) ?? ChannelState()
-            state.connectionState = connectionStore.state
-            channelStore.updateState(state, for: channel.id)
-        }
+        channelStore.updateAllConnectionStates(connectionStore.state)
+    }
+
+    private func isMention(_ event: ChatEvent) -> Bool {
+        guard case .message(let message) = event else { return false }
+        let tokens = [configuration.defaultNick, configuration.defaultUser]
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        guard !tokens.isEmpty else { return false }
+        let lowerText = message.text.lowercased()
+        return tokens.contains { lowerText.contains($0.lowercased()) }
     }
 }

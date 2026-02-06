@@ -27,10 +27,17 @@ struct ChannelTabStripView: View {
                             selection = channel.id
                             store.setActive(id: channel.id)
                         } label: {
+                            let state = store.state(for: channel.id) ?? ChannelState()
                             HStack(spacing: 6) {
                                 Text(channel.displayName)
                                     .font(.subheadline)
                                     .lineLimit(1)
+                                if state.mentionCount > 0 {
+                                    MentionBadge(count: state.mentionCount)
+                                }
+                                if state.unreadCount > 0 {
+                                    UnreadDot()
+                                }
                                 ChannelStatusIndicator(state: connectionState(channel))
                             }
                             .padding(.horizontal, 12)
@@ -106,6 +113,30 @@ struct ChannelTabStripView: View {
     private func foreground(for channel: Channel) -> Color {
         let isActive = channel.id == selection || channel.id == store.activeChannelId
         return isActive ? .primary : .secondary
+    }
+}
+
+private struct UnreadDot: View {
+    var body: some View {
+        Circle()
+            .fill(Color.accentColor)
+            .frame(width: 8, height: 8)
+            .accessibilityLabel("Unread messages")
+    }
+}
+
+private struct MentionBadge: View {
+    let count: Int
+
+    var body: some View {
+        Text("\(count)")
+            .font(.caption2)
+            .foregroundStyle(.white)
+            .padding(.horizontal, 6)
+            .padding(.vertical, 2)
+            .background(Color.red)
+            .clipShape(Capsule())
+            .accessibilityLabel("\(count) mentions")
     }
 }
 
