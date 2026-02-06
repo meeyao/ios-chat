@@ -81,14 +81,35 @@ struct ChatRichTextView: UIViewRepresentable {
                     options: [.highPriority],
                     progress: nil
                 ) { image, _, _, _, _, _ in
-                    guard let image else { return }
-                    DispatchQueue.main.async {
-                        attachment.image = image
-                        textView.layoutManager.invalidateLayout(
-                            forCharacterRange: range,
-                            actualCharacterRange: nil
+                    DispatchQueue.main.async { [weak textView] in
+                        guard let textView else { return }
+                        if let image {
+                            attachment.image = image
+                            textView.layoutManager.invalidateLayout(
+                                forCharacterRange: range,
+                                actualCharacterRange: nil
+                            )
+                            textView.layoutManager.invalidateDisplay(forCharacterRange: range)
+                            return
+                        }
+
+                        guard range.location < textView.attributedText.length else { return }
+                        let currentAttachment = textView.attributedText.attribute(
+                            .attachment,
+                            at: range.location,
+                            effectiveRange: nil
+                        ) as? ChatEmoteAttachment
+                        guard currentAttachment === attachment else { return }
+
+                        var attributes = textView.attributedText.attributes(
+                            at: range.location,
+                            effectiveRange: nil
                         )
-                        textView.layoutManager.invalidateDisplay(forCharacterRange: range)
+                        attributes.removeValue(forKey: .attachment)
+                        let fallback = NSAttributedString(string: attachment.emote.code, attributes: attributes)
+                        textView.textStorage.beginEditing()
+                        textView.textStorage.replaceCharacters(in: range, with: fallback)
+                        textView.textStorage.endEditing()
                     }
                 }
             }
