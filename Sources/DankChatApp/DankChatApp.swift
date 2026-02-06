@@ -9,6 +9,7 @@ struct DankChatApp: App {
 
     init() {
         let configuration = AppConfiguration.load()
+        ImagePipeline.configure()
         let tokenStore = KeychainTokenStore(
             service: configuration.keychainService,
             account: configuration.keychainAccount
