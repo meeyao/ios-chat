@@ -97,11 +97,11 @@ Plans:
 Plans:
 - [x] 04-01-PLAN.md — Add SDWebImage/WebP pipeline and app startup wiring
 - [x] 04-02-PLAN.md — Parse IRC tags into typed Twitch emote/badge metadata
-- [ ] 04-03-PLAN.md — Provider clients + unified Emote/Badge stores with caching and outage signaling
-- [ ] 04-04-PLAN.md — Inline emote rendering (rich text) + animated emote control
-- [ ] 04-05-PLAN.md — Badge rendering + global visibility toggles
-- [ ] 04-06-PLAN.md — Emote menu bottom sheet (tabs/search/recents) + composer insertion
-- [ ] 04-07-PLAN.md — Emote suggestions (fuzzy) + composer UI integration
+- [x] 04-03-PLAN.md — Provider clients + unified Emote/Badge stores with caching and outage signaling
+- [x] 04-04-PLAN.md — Inline emote rendering (rich text) + animated emote control
+- [x] 04-05-PLAN.md — Badge rendering + global visibility toggles
+- [x] 04-06-PLAN.md — Emote menu bottom sheet (tabs/search/recents) + composer insertion
+- [x] 04-07-PLAN.md — Emote suggestions (fuzzy) + composer UI integration
 
 **Success Criteria:**
 1. Emotes/badges render accurately with correct positioning and caching.
@@ -187,7 +187,7 @@ Plans:
 | Phase 1: Foundation (Auth + Connectivity) | In Progress | 0% |
 | Phase 2: Core Chat Pipeline | Complete | 100% |
 | Phase 3: Multi-Channel Navigation | Complete | 100% |
-| Phase 4: Emotes + Badges Ecosystem | In Progress | 29% |
+| Phase 4: Emotes + Badges Ecosystem | In Progress | 100% (gaps found) |
 | Phase 5: Social + Moderation | Pending | 0% |
 | Phase 6: Highlights + Notifications | Pending | 0% |
 | Phase 7: Streams + Tools | Pending | 0% |
