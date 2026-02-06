@@ -15,34 +15,44 @@ struct ChatComposerView: View {
     @StateObject private var recentsStore = EmoteRecentsStore()
     @StateObject private var menuSettings = EmoteMenuSettings()
 
+    private let suggestionEngine = EmoteSuggestionEngine()
+
     var body: some View {
-        HStack(spacing: 12) {
-            Button {
-                isShowingEmoteMenu = true
-            } label: {
-                Image(systemName: "face.smiling")
-                    .font(.title3)
+        VStack(spacing: 8) {
+            if !suggestions.isEmpty {
+                EmoteSuggestionsView(suggestions: suggestions) { emote in
+                    applySuggestion(emote)
+                }
             }
-            .buttonStyle(.bordered)
 
-            ComposerTextView(text: $messageText, selection: $selection) {
-                sendMessage()
-            }
-            .frame(minHeight: 36, maxHeight: 96)
-            .background(
-                RoundedRectangle(cornerRadius: 8)
-                    .fill(Color(.secondarySystemBackground))
-            )
-            .overlay(
-                RoundedRectangle(cornerRadius: 8)
-                    .stroke(Color(.separator))
-            )
+            HStack(spacing: 12) {
+                Button {
+                    isShowingEmoteMenu = true
+                } label: {
+                    Image(systemName: "face.smiling")
+                        .font(.title3)
+                }
+                .buttonStyle(.bordered)
 
-            Button("Send") {
-                sendMessage()
+                ComposerTextView(text: $messageText, selection: $selection) {
+                    sendMessage()
+                }
+                .frame(minHeight: 36, maxHeight: 96)
+                .background(
+                    RoundedRectangle(cornerRadius: 8)
+                        .fill(Color(.secondarySystemBackground))
+                )
+                .overlay(
+                    RoundedRectangle(cornerRadius: 8)
+                        .stroke(Color(.separator))
+                )
+
+                Button("Send") {
+                    sendMessage()
+                }
+                .buttonStyle(.borderedProminent)
+                .disabled(!canSend)
             }
-            .buttonStyle(.borderedProminent)
-            .disabled(!canSend)
         }
         .sheet(isPresented: $isShowingEmoteMenu) {
             EmoteMenuSheet(
@@ -64,6 +74,28 @@ struct ChatComposerView: View {
 
     private var trimmedMessage: String {
         messageText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var suggestions: [Emote] {
+        let cursor = selection.location
+        guard let token = EmoteTokenization.currentToken(in: messageText, cursor: cursor) else {
+            return []
+        }
+        return suggestionEngine.suggestions(for: token, emotes: suggestionEmotes, limit: 5)
+    }
+
+    private var suggestionEmotes: [Emote] {
+        var seen: Set<String> = []
+        var merged: [Emote] = []
+        for provider in ProviderID.allCases {
+            let emotes = emoteStore.emotes(for: provider, channelLogin: channel)
+            for emote in emotes {
+                guard !seen.contains(emote.code) else { continue }
+                seen.insert(emote.code)
+                merged.append(emote)
+            }
+        }
+        return merged
     }
 
     private var isConnected: Bool {
@@ -90,6 +122,22 @@ struct ChatComposerView: View {
         messageText = updated
         let newLocation = safeLocation + (text as NSString).length
         selection = NSRange(location: newLocation, length: 0)
+    }
+
+    private func applySuggestion(_ emote: Emote) {
+        guard let token = EmoteTokenization.currentToken(in: messageText, cursor: selection.location) else {
+            return
+        }
+        guard let updated = EmoteTokenization.replacingToken(
+            in: messageText,
+            token: token,
+            with: emote.code,
+            appendSpace: true
+        ) else {
+            return
+        }
+        messageText = updated.text
+        selection = NSRange(location: updated.cursor, length: 0)
     }
 }
 
