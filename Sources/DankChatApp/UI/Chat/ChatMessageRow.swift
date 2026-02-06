@@ -4,6 +4,7 @@ import DankChatCore
 struct ChatMessageRow: View {
     let message: ChatMessage
     @ObservedObject var settings: ChatSettings
+    @EnvironmentObject private var emoteStore: EmoteStore
 
     private static let timestampFormatter: DateFormatter = {
         let formatter = DateFormatter()
@@ -11,8 +12,6 @@ struct ChatMessageRow: View {
         formatter.dateStyle = .none
         return formatter
     }()
-
-    private static let linkDetector = try? NSDataDetector(types: NSTextCheckingResult.CheckingType.link.rawValue)
 
     var body: some View {
         HStack(alignment: .firstTextBaseline, spacing: 8) {
@@ -28,37 +27,22 @@ struct ChatMessageRow: View {
                     .font(.subheadline.weight(.semibold))
             }
 
-            messageText
-                .font(.subheadline)
+            ChatRichTextView(message: message, settings: settings, emoteStore: emoteStore)
         }
         .frame(maxWidth: .infinity, alignment: .leading)
-    }
-
-    private var messageText: some View {
-        let attributed = Self.attributedMessageText(message.text)
-        return Text(attributed)
-            .foregroundStyle(.primary)
-            .italic(message.isAction)
-    }
-
-    private static func attributedMessageText(_ text: String) -> AttributedString {
-        guard let detector = linkDetector else {
-            return AttributedString(text)
-        }
-
-        let attributed = NSMutableAttributedString(string: text)
-        let range = NSRange(location: 0, length: attributed.length)
-        detector.enumerateMatches(in: text, options: [], range: range) { match, _, _ in
-            guard let match, let url = match.url else { return }
-            attributed.addAttribute(.link, value: url, range: match.range)
-        }
-
-        return AttributedString(attributed)
     }
 }
 
 #Preview {
     let settings = ChatSettings()
+    let configuration = OAuthConfiguration(clientId: "", redirectURI: "", scopes: [])
+    let twitchProvider = TwitchEmoteProvider(configuration: configuration, tokenProvider: { nil })
+    let emoteStore = EmoteStore(
+        twitchProvider: twitchProvider,
+        bttvProvider: BTTVEmoteProvider(),
+        ffzProvider: FFZEmoteProvider(),
+        sevenTVProvider: SevenTVEmoteProvider()
+    )
     let user = ChatUser(displayName: "kappa", login: "kappa")
     let message = ChatMessage(
         id: "1",
@@ -70,5 +54,6 @@ struct ChatMessageRow: View {
     )
 
     return ChatMessageRow(message: message, settings: settings)
+        .environmentObject(emoteStore)
         .padding()
 }
