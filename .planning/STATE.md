@@ -21,13 +21,13 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 **Phase:** 4 of 8 (Emotes + Badges Ecosystem)
 
-**Current Plan:** 04-07-PLAN.md (complete)
+**Current Plan:** 04-05-PLAN.md (complete)
 
 **Status:** In progress
 
-**Last activity:** 2026-02-06 - Completed 04-07-PLAN.md
+**Last activity:** 2026-02-06 - Completed 04-05-PLAN.md
 
-**Progress Bar:** ``██████████ 93%`` (14/15 plans complete)
+**Progress Bar:** ``██████████ 100%`` (15/15 plans complete)
 
 ## Performance Metrics
 
@@ -55,6 +55,8 @@ DankChat users can switch to iOS without losing any features or behavior they re
 | Default emote recents ordering to most recent | Match expected initial menu behavior | Applied in EmoteMenuSettings |
 | UITextView data detectors for rich text links | Preserve tappable links in message renderer | Applied in ChatRichTextView |
 | Zero-width wrap points between adjacent emotes | Preserve wrapping when collapsing spaces | Applied in ChatRichTextBuilder |
+| Shared badge visibility settings (UserDefaults) | Provide global badge toggles across channels | Applied in BadgeVisibilitySettings |
+| Badge name display via tap alert | Minimal badge identification UX | Applied in BadgeView |
 
 ### Technology Stack
 
@@ -115,15 +117,15 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 ## Session Continuity
 
-**Last session:** 2026-02-06 07:03 UTC
+**Last session:** 2026-02-06 07:05 UTC
 
-**Stopped at:** Completed 04-07-PLAN.md
+**Stopped at:** Completed 04-05-PLAN.md
 
 **Resume file:** None
 
-**Next Action:** Begin Phase 4 Plan 04-05
+**Next Action:** Begin Phase 5 planning/execution
 
-**Context Handoff:** Composer emote suggestions are wired with prefix/fuzzy ranking and token replacement; build verification pending due to missing Swift toolchain.
+**Context Handoff:** Badges render before usernames with global visibility toggles persisted in UserDefaults; build verification pending due to missing Swift toolchain.
 
 ---
 
