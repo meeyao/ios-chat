@@ -126,7 +126,66 @@ public final class ChannelStore: ObservableObject {
     public func updateState(_ state: ChannelState, for id: String) {
         let normalizedId = Self.normalizeId(id)
         guard !normalizedId.isEmpty else { return }
-        states[normalizedId] = state
+        updateStateValue(state, for: normalizedId)
+    }
+
+    public func updateScrollState(channelId: String, isAtBottom: Bool, lastReadMessageId: String?) {
+        let normalizedId = Self.normalizeId(channelId)
+        guard !normalizedId.isEmpty else { return }
+        var state = states[normalizedId] ?? ChannelState()
+        let changed = state.isAtBottom != isAtBottom || state.lastReadMessageId != lastReadMessageId
+        guard changed else { return }
+        state.isAtBottom = isAtBottom
+        state.lastReadMessageId = lastReadMessageId
+        if normalizedId == activeChannelId, isAtBottom {
+            state.unreadCount = 0
+            state.mentionCount = 0
+        }
+        updateStateValue(state, for: normalizedId)
+    }
+
+    public func markChannelRead(channelId: String) {
+        let normalizedId = Self.normalizeId(channelId)
+        guard !normalizedId.isEmpty else { return }
+        var state = states[normalizedId] ?? ChannelState()
+        state.unreadCount = 0
+        state.mentionCount = 0
+        updateStateValue(state, for: normalizedId)
+    }
+
+    public func recordIncomingEvent(channelId: String, isMention: Bool) {
+        let normalizedId = Self.normalizeId(channelId)
+        guard !normalizedId.isEmpty else { return }
+        var state = states[normalizedId] ?? ChannelState()
+
+        let isActive = normalizedId == activeChannelId
+        let shouldIncrementUnread = !isActive || (isActive && !state.isAtBottom)
+        if shouldIncrementUnread {
+            state.unreadCount += 1
+            if isMention {
+                state.mentionCount += 1
+            }
+        } else {
+            state.unreadCount = 0
+            state.mentionCount = 0
+        }
+
+        updateStateValue(state, for: normalizedId)
+    }
+
+    public func updateConnectionState(channelId: String, state: IRCConnectionState) {
+        let normalizedId = Self.normalizeId(channelId)
+        guard !normalizedId.isEmpty else { return }
+        var channelState = states[normalizedId] ?? ChannelState()
+        guard channelState.connectionState != state else { return }
+        channelState.connectionState = state
+        updateStateValue(channelState, for: normalizedId)
+    }
+
+    public func updateAllConnectionStates(_ state: IRCConnectionState) {
+        for channel in channels {
+            updateConnectionState(channelId: channel.id, state: state)
+        }
     }
 
     public func hasHistory(id: String) -> Bool {
@@ -140,6 +199,11 @@ public final class ChannelStore: ObservableObject {
         var channel = channels[index]
         channel.displayName = Channel.displayName(from: name)
         channels[index] = channel
+    }
+
+    private func updateStateValue(_ state: ChannelState, for id: String) {
+        objectWillChange.send()
+        states[id] = state
     }
 
     private func updateSortOrder(for id: String, order: Int) {
