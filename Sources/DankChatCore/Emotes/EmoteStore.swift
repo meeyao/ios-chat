@@ -146,6 +146,13 @@ public final class EmoteStore: ObservableObject {
         return twitchEmotesByIdGlobal[occurrence.emoteId]
     }
 
+    public func preferredImageURL(for emote: Emote, allowAnimated: Bool) -> URL {
+        if allowAnimated || !emote.isAnimated {
+            return emote.imageURLs.preferred
+        }
+        return emote.imageURLs.fallback ?? emote.imageURLs.url1x
+    }
+
     private func refreshGlobalEmotes(for provider: ProviderID, fetch: () async throws -> [Emote]) async {
         do {
             let emotes = try await fetch()
