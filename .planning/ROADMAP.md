@@ -1,7 +1,7 @@
 # Roadmap
 
 **Project:** DankChat/Chatterino iOS Port
-**Last updated:** 2026-02-05
+**Last updated:** 2026-02-06
 **Scope:** 1:1 feature parity with DankChat (see `.planning/PARITY.md`)
 **Depth:** Full parity (8 phases)
 
@@ -65,6 +65,13 @@ Plans:
 **Dependencies:** Phase 2
 
 **Scope:** Channel list, add/remove, rename, tabs, per-channel unread/mention counts, connection status per channel.
+
+**Plans:** 3 plans
+
+Plans:
+- [ ] 03-01-PLAN.md — Channel models + per-channel store + IRC routing
+- [ ] 03-02-PLAN.md — Channel switcher UI + management + app shell wiring
+- [ ] 03-03-PLAN.md — Unread/mention indicators + scroll state preservation
 
 **Success Criteria:**
 1. Users can join, rename, and remove channels.
@@ -173,7 +180,7 @@ Plans:
 | Phase 7: Streams + Tools | Pending | 0% |
 | Phase 8: Settings + Polish | Pending | 0% |
 
-**Overall Progress:** 0%
+**Overall Progress:** 13%
 
 ## Dependency Graph
 
