@@ -99,6 +99,32 @@ public final class BadgeStore: ObservableObject {
         }
     }
 
+    public func availableBadgeCategories() -> [ProviderID: [String]] {
+        var categorySets: [ProviderID: Set<String>] = [:]
+
+        for (provider, badges) in globalBadges {
+            var existing = categorySets[provider] ?? []
+            for badge in badges {
+                existing.insert(badge.badgeId)
+            }
+            categorySets[provider] = existing
+        }
+
+        for (_, providerMap) in channelBadges {
+            for (provider, badges) in providerMap {
+                var existing = categorySets[provider] ?? []
+                for badge in badges {
+                    existing.insert(badge.badgeId)
+                }
+                categorySets[provider] = existing
+            }
+        }
+
+        return Dictionary(uniqueKeysWithValues: categorySets.map { provider, categories in
+            (provider, categories.sorted())
+        })
+    }
+
     private func resolveBroadcasterId(login: String) async -> String? {
         if let cached = broadcasterIdCache[login] {
             return cached
