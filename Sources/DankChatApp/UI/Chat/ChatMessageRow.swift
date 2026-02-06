@@ -41,6 +41,7 @@ struct ChatMessageRow: View {
                 } label: {
                     Text(message.user.displayName)
                         .font(.subheadline.weight(.semibold))
+                        .foregroundStyle(usernameColor ?? .primary)
                 }
                 .buttonStyle(.plain)
             }
@@ -68,6 +69,10 @@ struct ChatMessageRow: View {
 
     private func providerRank(_ provider: ProviderID) -> Int {
         Self.badgeProviderOrder.firstIndex(of: provider) ?? Self.badgeProviderOrder.count
+    }
+
+    private var usernameColor: Color? {
+        UsernameColor.color(from: message.user.color)
     }
 }
 
