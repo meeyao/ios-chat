@@ -32,6 +32,11 @@ public final class ChatSession {
         supervisor.enqueueJoin(target)
     }
 
+    public func part(channel: String) {
+        let target = Self.normalizeChannel(channel)
+        supervisor.sendRaw("PART #\(target)")
+    }
+
     private func handleIncoming(_ text: String) {
         buffer.append(text)
         drainBuffer()
