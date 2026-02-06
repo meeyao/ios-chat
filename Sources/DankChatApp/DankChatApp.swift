@@ -47,6 +47,9 @@ private struct ContentView: View {
     @StateObject private var chatSettings: ChatSettings
     @StateObject private var channelStore: ChannelStore
     @StateObject private var connectionStore: ConnectionStatusStore
+    @StateObject private var providerStatusStore: ProviderStatusStore
+    @StateObject private var emoteStore: EmoteStore
+    @StateObject private var badgeStore: BadgeStore
     @State private var chatSession: ChatSession?
     @State private var didStartMonitoring = false
     @State private var showManagement = false
@@ -64,6 +67,37 @@ private struct ContentView: View {
         _chatSettings = StateObject(wrappedValue: settings)
         _channelStore = StateObject(wrappedValue: ChannelStore(settings: settings))
         _connectionStore = StateObject(wrappedValue: connectionSupervisor.statusStore())
+
+        let providerStatusStore = ProviderStatusStore()
+        let tokenProvider: () async -> String? = { [weak authManager] in
+            guard let authManager else { return nil }
+            if case let .signedIn(token) = authManager.state {
+                return token.accessToken
+            }
+            return nil
+        }
+
+        let twitchEmoteProvider = TwitchEmoteProvider(
+            configuration: configuration.oauthConfiguration,
+            tokenProvider: tokenProvider
+        )
+        let emoteStore = EmoteStore(
+            twitchProvider: twitchEmoteProvider,
+            bttvProvider: BTTVEmoteProvider(),
+            ffzProvider: FFZEmoteProvider(),
+            sevenTVProvider: SevenTVEmoteProvider(),
+            providerStatus: providerStatusStore
+        )
+
+        let twitchBadgeProvider = TwitchBadgeProvider(
+            configuration: configuration.oauthConfiguration,
+            tokenProvider: tokenProvider
+        )
+        let badgeStore = BadgeStore(twitchProvider: twitchBadgeProvider, providerStatus: providerStatusStore)
+
+        _providerStatusStore = StateObject(wrappedValue: providerStatusStore)
+        _emoteStore = StateObject(wrappedValue: emoteStore)
+        _badgeStore = StateObject(wrappedValue: badgeStore)
     }
 
     var body: some View {
@@ -74,6 +108,9 @@ private struct ContentView: View {
                 ipadLayout
             }
         }
+        .environmentObject(emoteStore)
+        .environmentObject(badgeStore)
+        .environmentObject(providerStatusStore)
         .sheet(isPresented: $showManagement) {
             ChannelManagementView(
                 store: channelStore,
@@ -92,12 +129,14 @@ private struct ContentView: View {
         .onChange(of: channelStore.channels) { _, _ in
             syncActiveChannel()
             syncConnectionStates()
+            refreshProviders()
         }
         .onChange(of: channelStore.activeChannelId) { _, newValue in
             storedActiveChannelId = newValue
             if let id = newValue {
                 channelStore.markChannelRead(channelId: id)
             }
+            refreshProviders()
         }
         .onChange(of: connectionStore.state) { _, _ in
             syncConnectionStates()
@@ -392,6 +431,16 @@ private struct ContentView: View {
 
     private func syncConnectionStates() {
         channelStore.updateAllConnectionStates(connectionStore.state)
+    }
+
+    private func refreshProviders() {
+        let channels = channelStore.channels
+        Task {
+            for channel in channels {
+                await emoteStore.loadChannelEmotes(channelLogin: channel.id)
+                await badgeStore.loadChannelBadges(channelLogin: channel.id)
+            }
+        }
     }
 
     private func isMention(_ event: ChatEvent) -> Bool {
