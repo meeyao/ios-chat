@@ -9,6 +9,7 @@ struct ChatSettingsView: View {
             VStack(alignment: .leading, spacing: 12) {
                 Toggle("Show Timestamps", isOn: $settings.showTimestamps)
                 Toggle("Show Usernames", isOn: $settings.showUsernames)
+                Toggle("Animate Emotes", isOn: $settings.allowAnimatedEmotes)
 
                 Stepper(value: $settings.scrollbackLimit, in: 100...2000, step: 50) {
                     HStack {
