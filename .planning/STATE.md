@@ -21,13 +21,13 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 **Phase:** 4 of 8 (Emotes + Badges Ecosystem)
 
-**Current Plan:** 04-06-PLAN.md (complete)
+**Current Plan:** 04-04-PLAN.md (complete)
 
 **Status:** In progress
 
-**Last activity:** 2026-02-06 - Completed 04-06-PLAN.md
+**Last activity:** 2026-02-06 - Completed 04-04-PLAN.md
 
-**Progress Bar:** ``████████░░ 80%`` (12/15 plans complete)
+**Progress Bar:** ``█████████░ 87%`` (13/15 plans complete)
 
 ## Performance Metrics
 
@@ -53,6 +53,8 @@ DankChat users can switch to iOS without losing any features or behavior they re
 | SDWebImage cache caps (300 MB disk / 100 MB memory) | Prevent unbounded cache growth for emote assets | Applied in ImagePipeline.configure() |
 | Emote/badge stores injected via environment objects | Keep wiring isolated to app shell without UI changes | Applied in DankChatApp.ContentView |
 | Default emote recents ordering to most recent | Match expected initial menu behavior | Applied in EmoteMenuSettings |
+| UITextView data detectors for rich text links | Preserve tappable links in message renderer | Applied in ChatRichTextView |
+| Zero-width wrap points between adjacent emotes | Preserve wrapping when collapsing spaces | Applied in ChatRichTextBuilder |
 
 ### Technology Stack
 
@@ -113,15 +115,15 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 ## Session Continuity
 
-**Last session:** 2026-02-06 06:55 UTC
+**Last session:** 2026-02-06 06:56 UTC
 
-**Stopped at:** Completed 04-06-PLAN.md
+**Stopped at:** Completed 04-04-PLAN.md
 
 **Resume file:** None
 
-**Next Action:** Begin Phase 4 Plan 04-07
+**Next Action:** Begin Phase 4 Plan 04-05
 
-**Context Handoff:** Emote menu sheet with recents persistence is integrated into the composer; build verification pending due to missing Swift toolchain.
+**Context Handoff:** Chat messages render via a UIKit rich text view with inline emote attachments, spacing rules, and animation toggle; build verification pending due to missing Swift toolchain.
 
 ---
 
