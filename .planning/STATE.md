@@ -21,13 +21,13 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 **Phase:** 4 of 8 (Emotes + Badges Ecosystem)
 
-**Current Plan:** 04-03-PLAN.md (complete)
+**Current Plan:** 04-06-PLAN.md (complete)
 
 **Status:** In progress
 
-**Last activity:** 2026-02-06 - Completed 04-03-PLAN.md
+**Last activity:** 2026-02-06 - Completed 04-06-PLAN.md
 
-**Progress Bar:** ``███████░░░ 73%`` (11/15 plans complete)
+**Progress Bar:** ``████████░░ 80%`` (12/15 plans complete)
 
 ## Performance Metrics
 
@@ -52,6 +52,7 @@ DankChat users can switch to iOS without losing any features or behavior they re
 | Swift 6.1.2 with SPM | Modern concurrency and package management | Build infrastructure choice |
 | SDWebImage cache caps (300 MB disk / 100 MB memory) | Prevent unbounded cache growth for emote assets | Applied in ImagePipeline.configure() |
 | Emote/badge stores injected via environment objects | Keep wiring isolated to app shell without UI changes | Applied in DankChatApp.ContentView |
+| Default emote recents ordering to most recent | Match expected initial menu behavior | Applied in EmoteMenuSettings |
 
 ### Technology Stack
 
@@ -112,15 +113,15 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 ## Session Continuity
 
-**Last session:** 2026-02-06 06:46 UTC
+**Last session:** 2026-02-06 06:55 UTC
 
-**Stopped at:** Completed 04-03-PLAN.md
+**Stopped at:** Completed 04-06-PLAN.md
 
 **Resume file:** None
 
-**Next Action:** Begin Phase 4 Plan 04
+**Next Action:** Begin Phase 4 Plan 04-07
 
-**Context Handoff:** Unified emote/badge stores and provider clients are in place with outage events wired into app shell; build verification pending due to missing Swift toolchain.
+**Context Handoff:** Emote menu sheet with recents persistence is integrated into the composer; build verification pending due to missing Swift toolchain.
 
 ---
 
