@@ -2,20 +2,17 @@ import Foundation
 
 public final class ChatSession {
     private let supervisor: IRCConnectionSupervisor
-    private let store: ChatStore
-    private let settings: ChatSettings
+    private let channelStore: ChannelStore
     private let mapper = ChatMessageMapper()
     private var buffer = ""
 
     public init(
         supervisor: IRCConnectionSupervisor,
-        store: ChatStore,
-        settings: ChatSettings,
+        channelStore: ChannelStore,
         channel: String? = nil
     ) {
         self.supervisor = supervisor
-        self.store = store
-        self.settings = settings
+        self.channelStore = channelStore
         supervisor.onMessage = { [weak self] text in
             self?.handleIncoming(text)
         }
@@ -32,7 +29,7 @@ public final class ChatSession {
 
     public func join(channel: String) {
         let target = Self.normalizeChannel(channel)
-        supervisor.sendRaw("JOIN #\(target)")
+        supervisor.enqueueJoin(target)
     }
 
     private func handleIncoming(_ text: String) {
@@ -56,7 +53,8 @@ public final class ChatSession {
         }
 
         if let event = mapper.map(message) {
-            store.append(event: event)
+            guard let channelId = event.channel else { return }
+            channelStore.store(for: channelId).append(event: event)
         }
     }
 
