@@ -92,6 +92,17 @@ Plans:
 
 **Scope:** Twitch/BTTV/FFZ/7TV emotes, caching, animated GIF control, emote menu (tabs + recents), emote suggestions, badge rendering + visibility toggles, 7TV live updates.
 
+**Plans:** 7 plans
+
+Plans:
+- [ ] 04-01-PLAN.md — Add SDWebImage/WebP pipeline and app startup wiring
+- [ ] 04-02-PLAN.md — Parse IRC tags into typed Twitch emote/badge metadata
+- [ ] 04-03-PLAN.md — Provider clients + unified Emote/Badge stores with caching and outage signaling
+- [ ] 04-04-PLAN.md — Inline emote rendering (rich text) + animated emote control
+- [ ] 04-05-PLAN.md — Badge rendering + global visibility toggles
+- [ ] 04-06-PLAN.md — Emote menu bottom sheet (tabs/search/recents) + composer insertion
+- [ ] 04-07-PLAN.md — Emote suggestions (fuzzy) + composer UI integration
+
 **Success Criteria:**
 1. Emotes/badges render accurately with correct positioning and caching.
 2. Emote menu + suggestions behave like DankChat.
