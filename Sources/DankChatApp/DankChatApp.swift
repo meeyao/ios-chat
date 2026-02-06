@@ -334,6 +334,8 @@ private struct ContentView: View {
     private func channelDetail(for channel: Channel) -> some View {
         let store = channelStore.store(for: channel.id)
         return VStack(spacing: 12) {
+            ProviderOutageBannerView()
+                .padding(.horizontal, 4)
             ChatTimelineView(
                 store: store,
                 settings: chatSettings,
