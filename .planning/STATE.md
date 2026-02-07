@@ -21,13 +21,13 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 **Phase:** 5 of 8 (Social + Moderation)
 
-**Current Plan:** 2 of 7 complete
+**Current Plan:** 3 of 7 complete
 
 **Status:** In progress
 
-**Last activity:** 2026-02-07 - Completed 05-02-PLAN.md
+**Last activity:** 2026-02-07 - Completed 05-03-PLAN.md
 
-**Progress Bar:** ``██░░░░░░░░ 29%`` (2/7 plans complete in Phase 5)
+**Progress Bar:** ``███░░░░░░░ 43%`` (3/7 plans complete in Phase 5)
 
 ## Performance Metrics
 
@@ -37,7 +37,7 @@ DankChat users can switch to iOS without losing any features or behavior they re
 **Phases:**
 - Total: 8
 - Completed: 3
-- In Progress: 1 (Phase 5: 2/7 plans complete)
+- In Progress: 1 (Phase 5: 3/7 plans complete)
 - Blocked: 0
 
 ## Accumulated Context
@@ -65,6 +65,10 @@ DankChat users can switch to iOS without losing any features or behavior they re
 | Classifier checks userId first for reply detection | Most reliable identity match | Applied in SocialMessageClassifier |
 | isMention falls back to defaultNick when identity nil | Backward compatible mention detection | Applied in ContentView.isMention |
 | SocialTabStore shares ChatSettings scrollback limits | Consistent memory bounds across stores | Applied in SocialTabStore init |
+| EventSub WebSocket via URLSessionWebSocketTask | Consistent with IRCWebSocketClient pattern; no new deps | Applied in EventSubClient |
+| Whisper delivery uncertainty UX | Twitch may silently drop whispers; UX must not mislead | Applied in WhisperBubble |
+| Conversations keyed by Twitch user ID | User IDs stable; login/display names can change | Applied in WhisperStore |
+| EventSub auto-start on identity availability | Identity store onChange avoids duplicate lifecycle code | Applied in ContentView |
 
 ### Technology Stack
 
@@ -129,15 +133,15 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 ## Session Continuity
 
-**Last session:** 2026-02-07 16:53 UTC
+**Last session:** 2026-02-07 17:00 UTC
 
-**Stopped at:** Completed 05-02-PLAN.md
+**Stopped at:** Completed 05-03-PLAN.md
 
 **Resume file:** None
 
-**Next Action:** Execute 05-03-PLAN.md (next plan in Phase 5)
+**Next Action:** Execute 05-05-PLAN.md (next plan in Phase 5)
 
-**Context Handoff:** Reply metadata parsing, social classifier, and Mentions/Replies tabs are in place. SocialTabStore is wired into ContentView and receives all incoming events. Feature services for whispers, moderation, followage, and block/unblock can extend the social layer.
+**Context Handoff:** EventSub WebSocket client and whisper send/receive flow are in place. WhisperStore manages conversations with delivery uncertainty. EventSubClient is extensible for moderation and chat settings events needed by later plans. HelixWhisperService wraps POST /whispers. All wired into ContentView via environmentObject.
 
 ---
 
