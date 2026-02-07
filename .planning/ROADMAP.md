@@ -124,6 +124,19 @@ Plans:
 
 **Scope:** Mentions tab, whispers tab, reply threads, user popup (profile, followage, block), moderation actions (timeout/ban/delete/unban), room state controls, custom commands + command suggestions.
 
+**Plans:** 7 plans (7/7 complete)
+
+**Completion:** 2026-02-07
+
+Plans:
+- [x] 05-01-PLAN.md — Helix foundation + user identity + scopes
+- [x] 05-02-PLAN.md — Mentions/replies parsing + tabs
+- [x] 05-03-PLAN.md — Whispers send/receive + EventSub tab
+- [x] 05-04-PLAN.md — User popup (profile/followage/block)
+- [x] 05-05-PLAN.md — Moderation actions (timeout/ban/delete)
+- [x] 05-06-PLAN.md — Room state sync + controls
+- [x] 05-07-PLAN.md — Custom commands + command suggestions
+
 **Success Criteria:**
 1. Mentions/whispers/replies flow matches DankChat UX.
 2. Moderation actions work with correct permissions and feedback.
@@ -192,12 +205,12 @@ Plans:
 | Phase 2: Core Chat Pipeline | Complete | 100% |
 | Phase 3: Multi-Channel Navigation | Complete | 100% |
 | Phase 4: Emotes + Badges Ecosystem | Complete | 100% |
-| Phase 5: Social + Moderation | Pending | 0% |
+| Phase 5: Social + Moderation | Complete | 100% |
 | Phase 6: Highlights + Notifications | Pending | 0% |
 | Phase 7: Streams + Tools | Pending | 0% |
 | Phase 8: Settings + Polish | Pending | 0% |
 
-**Overall Progress:** 38%
+**Overall Progress:** 50%
 
 ## Dependency Graph
 

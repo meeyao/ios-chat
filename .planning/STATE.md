@@ -1,7 +1,7 @@
 # Project State
 
 **Project:** DankChat/Chatterino iOS Port
-**Last updated:** 2026-02-07T17:22Z
+**Last updated:** 2026-02-07T17:43Z
 
 ## Project Reference
 
@@ -11,9 +11,9 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 ### Current Focus
 
-**Active Phase:** Phase 5 - Social + Moderation
+**Active Phase:** Phase 6 - Highlights + Notifications
 
-**Next Milestone:** Phase 5 - Social + Moderation
+**Next Milestone:** Phase 6 - Highlights + Notifications
 
 **Blockers:** Build verification pending (swift toolchain unavailable in this environment)
 
@@ -21,13 +21,13 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 **Phase:** 5 of 8 (Social + Moderation)
 
-**Current Plan:** 6 of 7 complete
+**Current Plan:** 7 of 7 complete
 
-**Status:** In progress
+**Status:** Phase complete
 
-**Last activity:** 2026-02-07 - Completed 05-06-PLAN.md
+**Last activity:** 2026-02-07 - Completed 05-07-PLAN.md
 
-**Progress Bar:** ``██████░░░░ 86%`` (6/7 plans complete in Phase 5)
+**Progress Bar:** ``██████████ 100%`` (24/24 plans complete)
 
 ## Performance Metrics
 
@@ -36,8 +36,8 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 **Phases:**
 - Total: 8
-- Completed: 3
-- In Progress: 1 (Phase 5: 6/7 plans complete)
+- Completed: 4
+- In Progress: 0
 - Blocked: 0
 
 ## Accumulated Context
@@ -81,6 +81,7 @@ DankChat users can switch to iOS without losing any features or behavior they re
 | Custom Encodable for HelixChatSettingsPatch | Helix PATCH endpoint expects missing keys for unchanged fields, not null values | Applied in HelixChatSettingsService |
 | RoomState stored in ChannelState | Co-locates room state with other per-channel metadata | Applied in ChannelState + ChannelStore |
 | toRoomState() on HelixChatSettings | Bidirectional sync: IRC populates initial state, Helix confirms updates | Applied in HelixChatSettingsService |
+| Supinic Android API contract for command suggestions | Match DankChat Android provider endpoints and payloads | Applied in CommandSuggestionsClient |
 
 ### Technology Stack
 
@@ -126,34 +127,21 @@ DankChat users can switch to iOS without losing any features or behavior they re
 | Tight coupling to emote services | Phase 2/3 | Lazy-load with cache, graceful degradation to text-only |
 | Search/highlight on raw text | Phase 2 | Tokenized message model, structured field search |
 
-### TODO
-
-**Immediate:**
-- Verify Phase 1 implementation with `swift test` in a Swift/Xcode environment
-- Run `swift test --filter IRCMessageParserTests` in a Swift toolchain
-- Use `.planning/PARITY.md` to drive Phase 2+ scope
-
-**Upcoming:**
-- Implement OAuth flow with Twitch
-- Set up Twitch IRC WebSocket connection
-- Implement rate limiting and join pacing
-- Build connection state machine with backoff
-
 ### Blockers
 
 - Swift toolchain unavailable for build verification in this environment (swift build skipped for 04-08, 04-09, and 05-06).
 
 ## Session Continuity
 
-**Last session:** 2026-02-07 17:22 UTC
+**Last session:** 2026-02-07 17:43 UTC
 
-**Stopped at:** Completed 05-06-PLAN.md
+**Stopped at:** Completed 05-07-PLAN.md
 
 **Resume file:** None
 
-**Next Action:** Execute 05-07-PLAN.md (final plan in Phase 5)
+**Next Action:** Plan Phase 6 (Highlights + Notifications)
 
-**Context Handoff:** Room state infrastructure is now complete. RoomState model tracks slow/followers/subs/emote/unique modes. RoomStateParser handles both full and partial IRC ROOMSTATE updates with merge support. ChatSession updates ChannelState.roomState before mapping to system messages. HelixChatSettingsService wraps GET/PATCH /chat/settings endpoints. ModerationContext now includes chatSettingsService alongside moderationService and chatMessagesService. RoomStateControlsView provides scope-gated toggles and steppers that update via Helix and sync back to ChannelStore. The custom HelixChatSettingsPatch encoder omits nil keys as required by the Helix API.
+**Context Handoff:** Custom commands now persist via CommandStore and expand through CommandResolver before sending. The composer exposes a command management sheet and Supinic-backed command suggestions with debounce. Command suggestions use Supinic command/channel/alias endpoints based on the DankChat Android contract.
 
 ---
 
