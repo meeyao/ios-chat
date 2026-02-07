@@ -51,6 +51,7 @@ private struct ContentView: View {
     @StateObject private var emoteStore: EmoteStore
     @StateObject private var badgeStore: BadgeStore
     @StateObject private var identityStore: UserIdentityStore
+    @StateObject private var socialTabStore: SocialTabStore
     @State private var chatSession: ChatSession?
     @State private var didStartMonitoring = false
     @State private var showManagement = false
@@ -103,10 +104,13 @@ private struct ContentView: View {
         let usersService = HelixUsersService(client: helixClient)
         let identityStore = UserIdentityStore(usersService: usersService)
 
+        let socialTabStore = SocialTabStore(settings: settings)
+
         _providerStatusStore = StateObject(wrappedValue: providerStatusStore)
         _emoteStore = StateObject(wrappedValue: emoteStore)
         _badgeStore = StateObject(wrappedValue: badgeStore)
         _identityStore = StateObject(wrappedValue: identityStore)
+        _socialTabStore = StateObject(wrappedValue: socialTabStore)
     }
 
     var body: some View {
@@ -121,6 +125,7 @@ private struct ContentView: View {
         .environmentObject(badgeStore)
         .environmentObject(providerStatusStore)
         .environmentObject(identityStore)
+        .environmentObject(socialTabStore)
         .sheet(isPresented: $showManagement) {
             ChannelManagementView(
                 store: channelStore,
@@ -367,10 +372,12 @@ private struct ContentView: View {
             )
             .onChange(of: store.entries.count) { _, _ in
                 guard let event = store.entries.last else { return }
+                let mention = isMention(event)
                 channelStore.recordIncomingEvent(
                     channelId: channel.id,
-                    isMention: isMention(event)
+                    isMention: mention
                 )
+                socialTabStore.append(event: event, identity: identityStore.user)
             }
             .frame(minHeight: 240)
             ChatComposerView(
@@ -468,8 +475,17 @@ private struct ContentView: View {
         }
     }
 
+    private static let classifier = SocialMessageClassifier()
+
     private func isMention(_ event: ChatEvent) -> Bool {
         guard case .message(let message) = event else { return false }
+
+        // Prefer authenticated identity from the identity store.
+        if let identity = identityStore.user {
+            return Self.classifier.isMention(message: message, identity: identity)
+        }
+
+        // Fall back to static config defaults when not signed in.
         let tokens = [configuration.defaultNick, configuration.defaultUser]
             .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
             .filter { !$0.isEmpty }
