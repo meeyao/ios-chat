@@ -21,13 +21,13 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 **Phase:** 5 of 8 (Social + Moderation)
 
-**Current Plan:** 3 of 7 complete
+**Current Plan:** 4 of 7 complete
 
 **Status:** In progress
 
-**Last activity:** 2026-02-07 - Completed 05-03-PLAN.md
+**Last activity:** 2026-02-07 - Completed 05-04-PLAN.md
 
-**Progress Bar:** ``███░░░░░░░ 43%`` (3/7 plans complete in Phase 5)
+**Progress Bar:** ``████░░░░░░ 57%`` (4/7 plans complete in Phase 5)
 
 ## Performance Metrics
 
@@ -37,7 +37,7 @@ DankChat users can switch to iOS without losing any features or behavior they re
 **Phases:**
 - Total: 8
 - Completed: 3
-- In Progress: 1 (Phase 5: 3/7 plans complete)
+- In Progress: 1 (Phase 5: 4/7 plans complete)
 - Blocked: 0
 
 ## Accumulated Context
@@ -69,6 +69,10 @@ DankChat users can switch to iOS without losing any features or behavior they re
 | Whisper delivery uncertainty UX | Twitch may silently drop whispers; UX must not mislead | Applied in WhisperBubble |
 | Conversations keyed by Twitch user ID | User IDs stable; login/display names can change | Applied in WhisperStore |
 | EventSub auto-start on identity availability | Identity store onChange avoids duplicate lifecycle code | Applied in ContentView |
+| Shared UserProfileStore as environmentObject | Consistent with WhisperStore pattern; reloaded per popup | Applied in ContentView + ChatMessageRow |
+| Custom CodingKeys for HelixUserProfile description | Helix 'description' field conflicts with Swift protocol; mapped to userDescription | Applied in HelixUserProfileService |
+| Channel login as followage channelId (graceful degradation) | Channel model stores logins not numeric IDs; followage degrades until resolved | Applied in UserProfileStore |
+| Paginated block list fetch | Users may have large block lists; loop through all pages | Applied in HelixBlockService |
 
 ### Technology Stack
 
@@ -133,15 +137,15 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 ## Session Continuity
 
-**Last session:** 2026-02-07 17:00 UTC
+**Last session:** 2026-02-07 17:08 UTC
 
-**Stopped at:** Completed 05-03-PLAN.md
+**Stopped at:** Completed 05-04-PLAN.md
 
 **Resume file:** None
 
 **Next Action:** Execute 05-05-PLAN.md (next plan in Phase 5)
 
-**Context Handoff:** EventSub WebSocket client and whisper send/receive flow are in place. WhisperStore manages conversations with delivery uncertainty. EventSubClient is extensible for moderation and chat settings events needed by later plans. HelixWhisperService wraps POST /whispers. All wired into ContentView via environmentObject.
+**Context Handoff:** User popup infrastructure is in place. HelixUserProfileService, HelixFollowageService, and HelixBlockService wrap the relevant Helix endpoints. UserProfileStore manages profile/followage/block state with scope-gated error handling. UserPopupView presents from ChatMessageRow username taps via sheet. All wired into ContentView via environmentObject. Followage requires channel ID resolution (channels currently use login names, not numeric IDs). Moderation actions (05-05, 05-06) can extend UserPopupView with timeout/ban controls.
 
 ---
 
