@@ -50,4 +50,5 @@ public enum SystemMessageKind: String, Equatable {
     case notice
     case userNotice
     case roomState
+    case moderation
 }
