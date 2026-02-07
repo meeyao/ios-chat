@@ -1,7 +1,7 @@
 # Project State
 
 **Project:** DankChat/Chatterino iOS Port
-**Last updated:** 2026-02-06
+**Last updated:** 2026-02-07
 
 ## Project Reference
 
@@ -21,13 +21,13 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 **Phase:** 5 of 8 (Social + Moderation)
 
-**Current Plan:** Not started
+**Current Plan:** 1 of 7 complete
 
-**Status:** Phase 4 complete (verified)
+**Status:** In progress
 
-**Last activity:** 2026-02-06 - Phase 4 human verification approved
+**Last activity:** 2026-02-07 - Completed 05-01-PLAN.md
 
-**Progress Bar:** ``░░░░░░░░░░ 0%`` (0/0 plans complete)
+**Progress Bar:** ``█░░░░░░░░░ 14%`` (1/7 plans complete in Phase 5)
 
 ## Performance Metrics
 
@@ -37,7 +37,7 @@ DankChat users can switch to iOS without losing any features or behavior they re
 **Phases:**
 - Total: 8
 - Completed: 3
-- In Progress: 1
+- In Progress: 1 (Phase 5: 1/7 plans complete)
 - Blocked: 0
 
 ## Accumulated Context
@@ -58,6 +58,9 @@ DankChat users can switch to iOS without losing any features or behavior they re
 | Shared badge visibility settings (UserDefaults) | Provide global badge toggles across channels | Applied in BadgeVisibilitySettings |
 | Badge name display via tap alert | Minimal badge identification UX | Applied in BadgeView |
 | Skip swift build verification in container | Swift toolchain unavailable in this environment | Noted for 04-08 verification |
+| Relaxed Sendable on HelixAPIClient | Match existing TwitchEmoteProvider closure pattern | Applied in HelixAPIClient + HelixUsersService |
+| convertFromSnakeCase key decoding in Helix client | Auto-map Helix snake_case fields to Swift camelCase | Applied in HelixAPIClient.execute() |
+| Centralized default OAuth scopes in HelixScope | Single source of truth for scope constants | Applied in AppConfiguration |
 
 ### Technology Stack
 
@@ -85,6 +88,8 @@ DankChat users can switch to iOS without losing any features or behavior they re
 - Unidirectional data flow (UDF)
 - Message enrichment pipeline
 - Connection supervisor
+- Helix API client with feature service wrappers
+- Observable identity store (refresh on sign-in, clear on sign-out)
 
 ### Known Pitfalls & Mitigations
 
@@ -118,15 +123,15 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 ## Session Continuity
 
-**Last session:** 2026-02-06 17:00 UTC
+**Last session:** 2026-02-07 16:45 UTC
 
-**Stopped at:** Phase 4 verification approved
+**Stopped at:** Completed 05-01-PLAN.md
 
 **Resume file:** None
 
-**Next Action:** Discuss Phase 5 scope (`/gsd-discuss-phase 5`)
+**Next Action:** Execute 05-02-PLAN.md (next wave 1 plan)
 
-**Context Handoff:** Phase 4 gaps closed and human verification approved. Phase 5 (Social + Moderation) is ready to plan.
+**Context Handoff:** Helix API client and user identity store established. Phase 5 feature services can now wrap HelixAPIClient for moderation, whispers, followage, and block/unblock.
 
 ---
 
