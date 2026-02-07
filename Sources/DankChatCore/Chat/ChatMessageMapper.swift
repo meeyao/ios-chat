@@ -54,6 +54,7 @@ public struct ChatMessageMapper {
         )
         let timestamp = serverTimestamp ?? receivedAt
         let latencyMs = serverTimestamp.map { Self.latencyMs(receivedAt: receivedAt, serverTimestamp: $0) }
+        let replyMetadata = Self.parseReplyMetadata(from: message)
         let chatMessage = ChatMessage(
             id: Self.tagValue("id", in: message),
             user: user,
@@ -64,7 +65,8 @@ public struct ChatMessageMapper {
             isAction: isAction,
             channel: channel,
             twitchEmotes: twitchEmotes,
-            badgeTags: badgeTags
+            badgeTags: badgeTags,
+            replyMetadata: replyMetadata
         )
         return .message(chatMessage)
     }
@@ -133,5 +135,23 @@ public struct ChatMessageMapper {
 
     private static func latencyMs(receivedAt: Date, serverTimestamp: Date) -> Int {
         Int((receivedAt.timeIntervalSince(serverTimestamp) * 1000.0).rounded())
+    }
+
+    /// Parses reply metadata from IRC `reply-parent-*` tags.
+    ///
+    /// Returns `nil` when the `reply-parent-msg-id` tag is absent, meaning the
+    /// message is not a reply.
+    private static func parseReplyMetadata(from message: IRCMessage) -> ReplyMetadata? {
+        guard let parentMsgId = tagValue("reply-parent-msg-id", in: message),
+              !parentMsgId.isEmpty else {
+            return nil
+        }
+        return ReplyMetadata(
+            parentMessageId: parentMsgId,
+            parentUserId: tagValue("reply-parent-user-id", in: message),
+            parentUserLogin: tagValue("reply-parent-user-login", in: message),
+            parentDisplayName: tagValue("reply-parent-display-name", in: message),
+            parentMessageBody: tagValue("reply-parent-msg-body", in: message)
+        )
     }
 }

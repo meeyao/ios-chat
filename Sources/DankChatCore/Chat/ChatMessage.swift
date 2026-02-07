@@ -20,6 +20,34 @@ public struct TwitchBadgeTag: Equatable {
     }
 }
 
+/// Metadata for a reply message, populated from IRC `reply-parent-*` tags.
+public struct ReplyMetadata: Equatable {
+    /// The message ID of the parent message being replied to.
+    public let parentMessageId: String
+    /// The user ID of the parent message author.
+    public let parentUserId: String?
+    /// The login name of the parent message author.
+    public let parentUserLogin: String?
+    /// The display name of the parent message author.
+    public let parentDisplayName: String?
+    /// The body text of the parent message.
+    public let parentMessageBody: String?
+
+    public init(
+        parentMessageId: String,
+        parentUserId: String? = nil,
+        parentUserLogin: String? = nil,
+        parentDisplayName: String? = nil,
+        parentMessageBody: String? = nil
+    ) {
+        self.parentMessageId = parentMessageId
+        self.parentUserId = parentUserId
+        self.parentUserLogin = parentUserLogin
+        self.parentDisplayName = parentDisplayName
+        self.parentMessageBody = parentMessageBody
+    }
+}
+
 public struct ChatMessage: Equatable {
     public let id: String?
     public let user: ChatUser
@@ -31,6 +59,8 @@ public struct ChatMessage: Equatable {
     public let channel: String
     public let twitchEmotes: [TwitchEmoteOccurrence]
     public let badgeTags: [TwitchBadgeTag]
+    /// Reply metadata, present only when this message is a reply to another message.
+    public let replyMetadata: ReplyMetadata?
 
     public init(
         id: String? = nil,
@@ -42,7 +72,8 @@ public struct ChatMessage: Equatable {
         isAction: Bool = false,
         channel: String,
         twitchEmotes: [TwitchEmoteOccurrence] = [],
-        badgeTags: [TwitchBadgeTag] = []
+        badgeTags: [TwitchBadgeTag] = [],
+        replyMetadata: ReplyMetadata? = nil
     ) {
         self.id = id
         self.user = user
@@ -54,5 +85,6 @@ public struct ChatMessage: Equatable {
         self.channel = channel
         self.twitchEmotes = twitchEmotes
         self.badgeTags = badgeTags
+        self.replyMetadata = replyMetadata
     }
 }
