@@ -4,11 +4,13 @@ import DankChatCore
 struct ChatMessageRow: View {
     let message: ChatMessage
     @ObservedObject var settings: ChatSettings
-    let onUsernameTap: ((ChatUser) -> Void)? = nil
     @EnvironmentObject private var emoteStore: EmoteStore
     @EnvironmentObject private var badgeStore: BadgeStore
+    @EnvironmentObject private var userProfileStore: UserProfileStore
+    @EnvironmentObject private var identityStore: UserIdentityStore
     @ObservedObject private var badgeVisibility = BadgeVisibilitySettings.shared
     @State private var showReplyThread = false
+    @State private var showUserPopup = false
 
     private static let badgeProviderOrder: [ProviderID] = [.twitch, .sevenTV, .bttv, .ffz]
 
@@ -43,7 +45,7 @@ struct ChatMessageRow: View {
 
                 if settings.showUsernames {
                     Button {
-                        onUsernameTap?(message.user)
+                        showUserPopup = true
                     } label: {
                         Text(message.user.displayName)
                             .font(.subheadline.weight(.semibold))
@@ -58,6 +60,16 @@ struct ChatMessageRow: View {
         .frame(maxWidth: .infinity, alignment: .leading)
         .sheet(isPresented: $showReplyThread) {
             ReplyThreadView(message: message, settings: settings)
+        }
+        .sheet(isPresented: $showUserPopup) {
+            UserPopupView(
+                store: userProfileStore,
+                userId: message.user.id,
+                login: message.user.login,
+                displayName: message.user.displayName,
+                channelId: message.channel,
+                currentUserId: identityStore.user?.id
+            )
         }
     }
 
@@ -115,6 +127,17 @@ struct ChatMessageRow: View {
         sevenTVProvider: SevenTVEmoteProvider()
     )
     let badgeStore = BadgeStore(twitchProvider: twitchBadgeProvider)
+    let helixClient = HelixAPIClient(clientId: "", tokenProvider: { nil })
+    let usersService = HelixUsersService(client: helixClient)
+    let identityStore = UserIdentityStore(usersService: usersService)
+    let profileService = HelixUserProfileService(client: helixClient)
+    let followageService = HelixFollowageService(client: helixClient)
+    let blockService = HelixBlockService(client: helixClient)
+    let userProfileStore = UserProfileStore(
+        profileService: profileService,
+        followageService: followageService,
+        blockService: blockService
+    )
     let user = ChatUser(displayName: "kappa", login: "kappa")
     let message = ChatMessage(
         id: "1",
@@ -128,5 +151,7 @@ struct ChatMessageRow: View {
     return ChatMessageRow(message: message, settings: settings)
         .environmentObject(emoteStore)
         .environmentObject(badgeStore)
+        .environmentObject(identityStore)
+        .environmentObject(userProfileStore)
         .padding()
 }

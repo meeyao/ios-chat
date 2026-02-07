@@ -63,6 +63,7 @@ private struct ContentView: View {
     @StateObject private var identityStore: UserIdentityStore
     @StateObject private var socialTabStore: SocialTabStore
     @StateObject private var whisperStore: WhisperStore
+    @StateObject private var userProfileStore: UserProfileStore
     @State private var chatSession: ChatSession?
     @State private var didStartMonitoring = false
     @State private var showManagement = false
@@ -122,12 +123,22 @@ private struct ContentView: View {
         let eventSubClient = EventSubClient(helixClient: helixClient)
         let whisperStore = WhisperStore(whisperService: whisperService, eventSubClient: eventSubClient)
 
+        let profileService = HelixUserProfileService(client: helixClient)
+        let followageService = HelixFollowageService(client: helixClient)
+        let blockService = HelixBlockService(client: helixClient)
+        let userProfileStore = UserProfileStore(
+            profileService: profileService,
+            followageService: followageService,
+            blockService: blockService
+        )
+
         _providerStatusStore = StateObject(wrappedValue: providerStatusStore)
         _emoteStore = StateObject(wrappedValue: emoteStore)
         _badgeStore = StateObject(wrappedValue: badgeStore)
         _identityStore = StateObject(wrappedValue: identityStore)
         _socialTabStore = StateObject(wrappedValue: socialTabStore)
         _whisperStore = StateObject(wrappedValue: whisperStore)
+        _userProfileStore = StateObject(wrappedValue: userProfileStore)
     }
 
     var body: some View {
@@ -144,6 +155,7 @@ private struct ContentView: View {
         .environmentObject(identityStore)
         .environmentObject(socialTabStore)
         .environmentObject(whisperStore)
+        .environmentObject(userProfileStore)
         .sheet(isPresented: $showManagement) {
             ChannelManagementView(
                 store: channelStore,
