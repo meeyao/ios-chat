@@ -44,6 +44,7 @@ private enum DetailTab: String, CaseIterable, Identifiable {
     case chat = "Chat"
     case mentions = "Mentions"
     case replies = "Replies"
+    case whispers = "Whispers"
 
     var id: String { rawValue }
 }
@@ -61,6 +62,7 @@ private struct ContentView: View {
     @StateObject private var badgeStore: BadgeStore
     @StateObject private var identityStore: UserIdentityStore
     @StateObject private var socialTabStore: SocialTabStore
+    @StateObject private var whisperStore: WhisperStore
     @State private var chatSession: ChatSession?
     @State private var didStartMonitoring = false
     @State private var showManagement = false
@@ -116,11 +118,16 @@ private struct ContentView: View {
 
         let socialTabStore = SocialTabStore(settings: settings)
 
+        let whisperService = HelixWhisperService(client: helixClient)
+        let eventSubClient = EventSubClient(helixClient: helixClient)
+        let whisperStore = WhisperStore(whisperService: whisperService, eventSubClient: eventSubClient)
+
         _providerStatusStore = StateObject(wrappedValue: providerStatusStore)
         _emoteStore = StateObject(wrappedValue: emoteStore)
         _badgeStore = StateObject(wrappedValue: badgeStore)
         _identityStore = StateObject(wrappedValue: identityStore)
         _socialTabStore = StateObject(wrappedValue: socialTabStore)
+        _whisperStore = StateObject(wrappedValue: whisperStore)
     }
 
     var body: some View {
@@ -136,6 +143,7 @@ private struct ContentView: View {
         .environmentObject(providerStatusStore)
         .environmentObject(identityStore)
         .environmentObject(socialTabStore)
+        .environmentObject(whisperStore)
         .sheet(isPresented: $showManagement) {
             ChannelManagementView(
                 store: channelStore,
@@ -160,8 +168,17 @@ private struct ContentView: View {
                 Task { await identityStore.refresh() }
             case .signedOut, .error:
                 identityStore.clear()
+                whisperStore.stop()
+                whisperStore.clearAll()
             case .signingIn:
                 break
+            }
+        }
+        .onChange(of: identityStore.user) { _, newUser in
+            if let user = newUser {
+                whisperStore.start(userId: user.id, userLogin: user.login, userName: user.displayName)
+            } else {
+                whisperStore.stop()
             }
         }
         .onChange(of: channelStore.channels) { _, _ in
@@ -396,6 +413,8 @@ private struct ContentView: View {
                     MentionsTabView(settings: chatSettings)
                 case .replies:
                     RepliesTabView(settings: chatSettings)
+                case .whispers:
+                    WhispersTabView()
                 }
             }
             .onChange(of: store.entries.count) { _, _ in
