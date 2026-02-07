@@ -8,9 +8,11 @@ struct ChatMessageRow: View {
     @EnvironmentObject private var badgeStore: BadgeStore
     @EnvironmentObject private var userProfileStore: UserProfileStore
     @EnvironmentObject private var identityStore: UserIdentityStore
+    @EnvironmentObject private var moderationContext: ModerationContext
     @ObservedObject private var badgeVisibility = BadgeVisibilitySettings.shared
     @State private var showReplyThread = false
     @State private var showUserPopup = false
+    @State private var showModerationSheet = false
 
     private static let badgeProviderOrder: [ProviderID] = [.twitch, .sevenTV, .bttv, .ffz]
 
@@ -58,6 +60,15 @@ struct ChatMessageRow: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .contextMenu {
+            if let moderatorId = identityStore.user?.id {
+                Button {
+                    showModerationSheet = true
+                } label: {
+                    Label("Moderate", systemImage: "shield.lefthalf.filled")
+                }
+            }
+        }
         .sheet(isPresented: $showReplyThread) {
             ReplyThreadView(message: message, settings: settings)
         }
@@ -70,6 +81,18 @@ struct ChatMessageRow: View {
                 channelId: message.channel,
                 currentUserId: identityStore.user?.id
             )
+        }
+        .sheet(isPresented: $showModerationSheet) {
+            if let moderatorId = identityStore.user?.id {
+                ModerationActionSheet(
+                    message: message,
+                    channelId: message.channel,
+                    moderatorId: moderatorId,
+                    moderationService: moderationContext.moderationService,
+                    chatMessagesService: moderationContext.chatMessagesService,
+                    channelStore: moderationContext.channelStore
+                )
+            }
         }
     }
 
@@ -138,6 +161,14 @@ struct ChatMessageRow: View {
         followageService: followageService,
         blockService: blockService
     )
+    let moderationService = HelixModerationService(client: helixClient)
+    let chatMessagesService = HelixChatMessagesService(client: helixClient)
+    let channelStore = ChannelStore(settings: settings)
+    let moderationContext = ModerationContext(
+        moderationService: moderationService,
+        chatMessagesService: chatMessagesService,
+        channelStore: channelStore
+    )
     let user = ChatUser(displayName: "kappa", login: "kappa")
     let message = ChatMessage(
         id: "1",
@@ -153,5 +184,6 @@ struct ChatMessageRow: View {
         .environmentObject(badgeStore)
         .environmentObject(identityStore)
         .environmentObject(userProfileStore)
+        .environmentObject(moderationContext)
         .padding()
 }

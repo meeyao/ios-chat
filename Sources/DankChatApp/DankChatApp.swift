@@ -64,6 +64,7 @@ private struct ContentView: View {
     @StateObject private var socialTabStore: SocialTabStore
     @StateObject private var whisperStore: WhisperStore
     @StateObject private var userProfileStore: UserProfileStore
+    @StateObject private var moderationContext: ModerationContext
     @State private var chatSession: ChatSession?
     @State private var didStartMonitoring = false
     @State private var showManagement = false
@@ -79,8 +80,9 @@ private struct ContentView: View {
         self.configuration = configuration
 
         let settings = ChatSettings()
+        let channelStore = ChannelStore(settings: settings)
         _chatSettings = StateObject(wrappedValue: settings)
-        _channelStore = StateObject(wrappedValue: ChannelStore(settings: settings))
+        _channelStore = StateObject(wrappedValue: channelStore)
         _connectionStore = StateObject(wrappedValue: connectionSupervisor.statusStore())
 
         let providerStatusStore = ProviderStatusStore()
@@ -132,6 +134,14 @@ private struct ContentView: View {
             blockService: blockService
         )
 
+        let moderationService = HelixModerationService(client: helixClient)
+        let chatMessagesService = HelixChatMessagesService(client: helixClient)
+        let moderationContext = ModerationContext(
+            moderationService: moderationService,
+            chatMessagesService: chatMessagesService,
+            channelStore: channelStore
+        )
+
         _providerStatusStore = StateObject(wrappedValue: providerStatusStore)
         _emoteStore = StateObject(wrappedValue: emoteStore)
         _badgeStore = StateObject(wrappedValue: badgeStore)
@@ -139,6 +149,7 @@ private struct ContentView: View {
         _socialTabStore = StateObject(wrappedValue: socialTabStore)
         _whisperStore = StateObject(wrappedValue: whisperStore)
         _userProfileStore = StateObject(wrappedValue: userProfileStore)
+        _moderationContext = StateObject(wrappedValue: moderationContext)
     }
 
     var body: some View {
@@ -156,6 +167,7 @@ private struct ContentView: View {
         .environmentObject(socialTabStore)
         .environmentObject(whisperStore)
         .environmentObject(userProfileStore)
+        .environmentObject(moderationContext)
         .sheet(isPresented: $showManagement) {
             ChannelManagementView(
                 store: channelStore,

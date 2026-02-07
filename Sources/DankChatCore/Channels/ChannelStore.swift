@@ -194,6 +194,28 @@ public final class ChannelStore: ObservableObject {
         return !store.entries.isEmpty
     }
 
+    /// Appends a system message to a channel's chat timeline.
+    ///
+    /// Use this to provide feedback for moderation actions, connection events, or other
+    /// non-user-initiated messages that should appear inline in the chat.
+    ///
+    /// - Parameters:
+    ///   - channelId: The channel to append the message to.
+    ///   - text: The text content of the system message.
+    ///   - kind: The kind of system message. Defaults to `.moderation`.
+    public func appendSystemMessage(channelId: String, text: String, kind: SystemMessageKind = .moderation) {
+        let normalizedId = Self.normalizeId(channelId)
+        guard !normalizedId.isEmpty else { return }
+        let chatStore = store(for: normalizedId)
+        let event = ChatEvent.system(SystemMessage(
+            text: text,
+            timestamp: Date(),
+            kind: kind,
+            channel: normalizedId
+        ))
+        chatStore.append(event: event)
+    }
+
     private func updateDisplayName(for id: String, name: String) {
         guard let index = channels.firstIndex(where: { $0.id == id }) else { return }
         var channel = channels[index]
