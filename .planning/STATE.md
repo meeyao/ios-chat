@@ -1,7 +1,7 @@
 # Project State
 
 **Project:** DankChat/Chatterino iOS Port
-**Last updated:** 2026-02-07
+**Last updated:** 2026-02-07T17:15Z
 
 ## Project Reference
 
@@ -21,13 +21,13 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 **Phase:** 5 of 8 (Social + Moderation)
 
-**Current Plan:** 4 of 7 complete
+**Current Plan:** 5 of 7 complete
 
 **Status:** In progress
 
-**Last activity:** 2026-02-07 - Completed 05-04-PLAN.md
+**Last activity:** 2026-02-07 - Completed 05-05-PLAN.md
 
-**Progress Bar:** ``████░░░░░░ 57%`` (4/7 plans complete in Phase 5)
+**Progress Bar:** ``█████░░░░░ 71%`` (5/7 plans complete in Phase 5)
 
 ## Performance Metrics
 
@@ -37,7 +37,7 @@ DankChat users can switch to iOS without losing any features or behavior they re
 **Phases:**
 - Total: 8
 - Completed: 3
-- In Progress: 1 (Phase 5: 4/7 plans complete)
+- In Progress: 1 (Phase 5: 5/7 plans complete)
 - Blocked: 0
 
 ## Accumulated Context
@@ -73,6 +73,10 @@ DankChat users can switch to iOS without losing any features or behavior they re
 | Custom CodingKeys for HelixUserProfile description | Helix 'description' field conflicts with Swift protocol; mapped to userDescription | Applied in HelixUserProfileService |
 | Channel login as followage channelId (graceful degradation) | Channel model stores logins not numeric IDs; followage degrades until resolved | Applied in UserProfileStore |
 | Paginated block list fetch | Users may have large block lists; loop through all pages | Applied in HelixBlockService |
+| ModerationContext environmentObject | Wrap moderation services + channelStore for view injection | Applied in ContentView + ChatMessageRow |
+| Shared ChannelStore for moderation feedback | Single instance ensures timeline feedback appears correctly | Applied in ContentView init refactor |
+| SystemMessageKind.moderation | Distinguish moderation feedback from IRC notices | Applied in ChatEvent + ChannelStore |
+| Context menu for moderation actions | Long-press follows platform convention, keeps row clean | Applied in ChatMessageRow |
 
 ### Technology Stack
 
@@ -137,15 +141,15 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 ## Session Continuity
 
-**Last session:** 2026-02-07 17:08 UTC
+**Last session:** 2026-02-07 17:15 UTC
 
-**Stopped at:** Completed 05-04-PLAN.md
+**Stopped at:** Completed 05-05-PLAN.md
 
 **Resume file:** None
 
-**Next Action:** Execute 05-05-PLAN.md (next plan in Phase 5)
+**Next Action:** Execute 05-06-PLAN.md (next plan in Phase 5)
 
-**Context Handoff:** User popup infrastructure is in place. HelixUserProfileService, HelixFollowageService, and HelixBlockService wrap the relevant Helix endpoints. UserProfileStore manages profile/followage/block state with scope-gated error handling. UserPopupView presents from ChatMessageRow username taps via sheet. All wired into ContentView via environmentObject. Followage requires channel ID resolution (channels currently use login names, not numeric IDs). Moderation actions (05-05, 05-06) can extend UserPopupView with timeout/ban controls.
+**Context Handoff:** Moderation infrastructure is in place. HelixModerationService wraps ban/timeout/unban endpoints. HelixChatMessagesService wraps delete/clear chat endpoints. ModerationContext environmentObject provides these services plus ChannelStore to any view. ModerationActionSheet presents from ChatMessageRow via context menu (long-press). All actions report success/failure as system messages in the channel timeline via ChannelStore.appendSystemMessage(). The ModerationContext pattern can be extended with HelixChatSettingsService for 05-06 (slow mode, followers-only, etc.).
 
 ---
 
