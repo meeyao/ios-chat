@@ -5,9 +5,9 @@ import Foundation
 /// Injects `Client-Id` and `Authorization: Bearer` headers automatically.
 /// Feature-specific services (users, moderation, etc.) wrap this client
 /// with typed request/response helpers.
-public final class HelixAPIClient: Sendable {
+public final class HelixAPIClient {
     private let clientId: String
-    private let tokenProvider: @Sendable () async -> String?
+    private let tokenProvider: () async -> String?
     private let urlSession: URLSession
     private let baseURL: URL
 
@@ -20,7 +20,7 @@ public final class HelixAPIClient: Sendable {
     ///   - baseURL: The Helix base URL. Defaults to `https://api.twitch.tv/helix`.
     public init(
         clientId: String,
-        tokenProvider: @escaping @Sendable () async -> String?,
+        tokenProvider: @escaping () async -> String?,
         urlSession: URLSession = .shared,
         baseURL: URL = URL(string: "https://api.twitch.tv/helix")!
     ) {

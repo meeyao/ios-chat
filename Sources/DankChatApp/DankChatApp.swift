@@ -50,6 +50,7 @@ private struct ContentView: View {
     @StateObject private var providerStatusStore: ProviderStatusStore
     @StateObject private var emoteStore: EmoteStore
     @StateObject private var badgeStore: BadgeStore
+    @StateObject private var identityStore: UserIdentityStore
     @State private var chatSession: ChatSession?
     @State private var didStartMonitoring = false
     @State private var showManagement = false
@@ -95,9 +96,17 @@ private struct ContentView: View {
         )
         let badgeStore = BadgeStore(twitchProvider: twitchBadgeProvider, providerStatus: providerStatusStore)
 
+        let helixClient = HelixAPIClient(
+            clientId: configuration.oauthConfiguration.clientId,
+            tokenProvider: tokenProvider
+        )
+        let usersService = HelixUsersService(client: helixClient)
+        let identityStore = UserIdentityStore(usersService: usersService)
+
         _providerStatusStore = StateObject(wrappedValue: providerStatusStore)
         _emoteStore = StateObject(wrappedValue: emoteStore)
         _badgeStore = StateObject(wrappedValue: badgeStore)
+        _identityStore = StateObject(wrappedValue: identityStore)
     }
 
     var body: some View {
@@ -111,6 +120,7 @@ private struct ContentView: View {
         .environmentObject(emoteStore)
         .environmentObject(badgeStore)
         .environmentObject(providerStatusStore)
+        .environmentObject(identityStore)
         .sheet(isPresented: $showManagement) {
             ChannelManagementView(
                 store: channelStore,
@@ -124,6 +134,19 @@ private struct ContentView: View {
                 connectionSupervisor.startMonitoring()
                 authManager.restoreSession()
                 await authManager.refreshIfNeeded()
+                if case .signedIn = authManager.state {
+                    await identityStore.refresh()
+                }
+            }
+        }
+        .onChange(of: authManager.state) { _, newState in
+            switch newState {
+            case .signedIn:
+                Task { await identityStore.refresh() }
+            case .signedOut, .error:
+                identityStore.clear()
+            case .signingIn:
+                break
             }
         }
         .onChange(of: channelStore.channels) { _, _ in
