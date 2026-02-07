@@ -21,13 +21,13 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 **Phase:** 5 of 8 (Social + Moderation)
 
-**Current Plan:** 1 of 7 complete
+**Current Plan:** 2 of 7 complete
 
 **Status:** In progress
 
-**Last activity:** 2026-02-07 - Completed 05-01-PLAN.md
+**Last activity:** 2026-02-07 - Completed 05-02-PLAN.md
 
-**Progress Bar:** ``█░░░░░░░░░ 14%`` (1/7 plans complete in Phase 5)
+**Progress Bar:** ``██░░░░░░░░ 29%`` (2/7 plans complete in Phase 5)
 
 ## Performance Metrics
 
@@ -37,7 +37,7 @@ DankChat users can switch to iOS without losing any features or behavior they re
 **Phases:**
 - Total: 8
 - Completed: 3
-- In Progress: 1 (Phase 5: 1/7 plans complete)
+- In Progress: 1 (Phase 5: 2/7 plans complete)
 - Blocked: 0
 
 ## Accumulated Context
@@ -61,6 +61,10 @@ DankChat users can switch to iOS without losing any features or behavior they re
 | Relaxed Sendable on HelixAPIClient | Match existing TwitchEmoteProvider closure pattern | Applied in HelixAPIClient + HelixUsersService |
 | convertFromSnakeCase key decoding in Helix client | Auto-map Helix snake_case fields to Swift camelCase | Applied in HelixAPIClient.execute() |
 | Centralized default OAuth scopes in HelixScope | Single source of truth for scope constants | Applied in AppConfiguration |
+| ReplyMetadata keyed on reply-parent-msg-id presence | Nil when absent, avoids false positives | Applied in ChatMessageMapper |
+| Classifier checks userId first for reply detection | Most reliable identity match | Applied in SocialMessageClassifier |
+| isMention falls back to defaultNick when identity nil | Backward compatible mention detection | Applied in ContentView.isMention |
+| SocialTabStore shares ChatSettings scrollback limits | Consistent memory bounds across stores | Applied in SocialTabStore init |
 
 ### Technology Stack
 
@@ -90,6 +94,8 @@ DankChat users can switch to iOS without losing any features or behavior they re
 - Connection supervisor
 - Helix API client with feature service wrappers
 - Observable identity store (refresh on sign-in, clear on sign-out)
+- Social classification: stateless classifier + observable store pattern
+- Detail tab segments: enum-driven Picker switching between timeline views
 
 ### Known Pitfalls & Mitigations
 
@@ -123,15 +129,15 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 ## Session Continuity
 
-**Last session:** 2026-02-07 16:45 UTC
+**Last session:** 2026-02-07 16:53 UTC
 
-**Stopped at:** Completed 05-01-PLAN.md
+**Stopped at:** Completed 05-02-PLAN.md
 
 **Resume file:** None
 
-**Next Action:** Execute 05-02-PLAN.md (next wave 1 plan)
+**Next Action:** Execute 05-03-PLAN.md (next plan in Phase 5)
 
-**Context Handoff:** Helix API client and user identity store established. Phase 5 feature services can now wrap HelixAPIClient for moderation, whispers, followage, and block/unblock.
+**Context Handoff:** Reply metadata parsing, social classifier, and Mentions/Replies tabs are in place. SocialTabStore is wired into ContentView and receives all incoming events. Feature services for whispers, moderation, followage, and block/unblock can extend the social layer.
 
 ---
 
