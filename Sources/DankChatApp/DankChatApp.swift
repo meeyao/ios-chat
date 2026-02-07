@@ -136,9 +136,11 @@ private struct ContentView: View {
 
         let moderationService = HelixModerationService(client: helixClient)
         let chatMessagesService = HelixChatMessagesService(client: helixClient)
+        let chatSettingsService = HelixChatSettingsService(client: helixClient)
         let moderationContext = ModerationContext(
             moderationService: moderationService,
             chatMessagesService: chatMessagesService,
+            chatSettingsService: chatSettingsService,
             channelStore: channelStore
         )
 
