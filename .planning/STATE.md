@@ -1,7 +1,7 @@
 # Project State
 
 **Project:** DankChat/Chatterino iOS Port
-**Last updated:** 2026-02-07T17:15Z
+**Last updated:** 2026-02-07T17:22Z
 
 ## Project Reference
 
@@ -21,13 +21,13 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 **Phase:** 5 of 8 (Social + Moderation)
 
-**Current Plan:** 5 of 7 complete
+**Current Plan:** 6 of 7 complete
 
 **Status:** In progress
 
-**Last activity:** 2026-02-07 - Completed 05-05-PLAN.md
+**Last activity:** 2026-02-07 - Completed 05-06-PLAN.md
 
-**Progress Bar:** ``█████░░░░░ 71%`` (5/7 plans complete in Phase 5)
+**Progress Bar:** ``██████░░░░ 86%`` (6/7 plans complete in Phase 5)
 
 ## Performance Metrics
 
@@ -37,7 +37,7 @@ DankChat users can switch to iOS without losing any features or behavior they re
 **Phases:**
 - Total: 8
 - Completed: 3
-- In Progress: 1 (Phase 5: 5/7 plans complete)
+- In Progress: 1 (Phase 5: 6/7 plans complete)
 - Blocked: 0
 
 ## Accumulated Context
@@ -77,6 +77,10 @@ DankChat users can switch to iOS without losing any features or behavior they re
 | Shared ChannelStore for moderation feedback | Single instance ensures timeline feedback appears correctly | Applied in ContentView init refactor |
 | SystemMessageKind.moderation | Distinguish moderation feedback from IRC notices | Applied in ChatEvent + ChannelStore |
 | Context menu for moderation actions | Long-press follows platform convention, keeps row clean | Applied in ChatMessageRow |
+| RoomStateParser merges partial ROOMSTATE updates | Twitch sends partial updates when a single mode changes; merge prevents loss of existing fields | Applied in RoomStateParser + ChatSession |
+| Custom Encodable for HelixChatSettingsPatch | Helix PATCH endpoint expects missing keys for unchanged fields, not null values | Applied in HelixChatSettingsService |
+| RoomState stored in ChannelState | Co-locates room state with other per-channel metadata | Applied in ChannelState + ChannelStore |
+| toRoomState() on HelixChatSettings | Bidirectional sync: IRC populates initial state, Helix confirms updates | Applied in HelixChatSettingsService |
 
 ### Technology Stack
 
@@ -137,19 +141,19 @@ DankChat users can switch to iOS without losing any features or behavior they re
 
 ### Blockers
 
-- Swift toolchain unavailable for build verification in this environment (swift build skipped for 04-08 and 04-09).
+- Swift toolchain unavailable for build verification in this environment (swift build skipped for 04-08, 04-09, and 05-06).
 
 ## Session Continuity
 
-**Last session:** 2026-02-07 17:15 UTC
+**Last session:** 2026-02-07 17:22 UTC
 
-**Stopped at:** Completed 05-05-PLAN.md
+**Stopped at:** Completed 05-06-PLAN.md
 
 **Resume file:** None
 
-**Next Action:** Execute 05-06-PLAN.md (next plan in Phase 5)
+**Next Action:** Execute 05-07-PLAN.md (final plan in Phase 5)
 
-**Context Handoff:** Moderation infrastructure is in place. HelixModerationService wraps ban/timeout/unban endpoints. HelixChatMessagesService wraps delete/clear chat endpoints. ModerationContext environmentObject provides these services plus ChannelStore to any view. ModerationActionSheet presents from ChatMessageRow via context menu (long-press). All actions report success/failure as system messages in the channel timeline via ChannelStore.appendSystemMessage(). The ModerationContext pattern can be extended with HelixChatSettingsService for 05-06 (slow mode, followers-only, etc.).
+**Context Handoff:** Room state infrastructure is now complete. RoomState model tracks slow/followers/subs/emote/unique modes. RoomStateParser handles both full and partial IRC ROOMSTATE updates with merge support. ChatSession updates ChannelState.roomState before mapping to system messages. HelixChatSettingsService wraps GET/PATCH /chat/settings endpoints. ModerationContext now includes chatSettingsService alongside moderationService and chatMessagesService. RoomStateControlsView provides scope-gated toggles and steppers that update via Helix and sync back to ChannelStore. The custom HelixChatSettingsPatch encoder omits nil keys as required by the Helix API.
 
 ---
 
