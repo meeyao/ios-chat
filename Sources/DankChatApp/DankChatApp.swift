@@ -39,6 +39,15 @@ struct DankChatApp: App {
     }
 }
 
+/// Segment options for the channel detail area.
+private enum DetailTab: String, CaseIterable, Identifiable {
+    case chat = "Chat"
+    case mentions = "Mentions"
+    case replies = "Replies"
+
+    var id: String { rawValue }
+}
+
 private struct ContentView: View {
     @ObservedObject var authManager: AuthManager
     let connectionSupervisor: IRCConnectionSupervisor
@@ -59,6 +68,7 @@ private struct ContentView: View {
     @SceneStorage("activeChannelId") private var storedActiveChannelId: String?
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var lastIRCConfiguration: IRCConfiguration?
+    @State private var selectedDetailTab: DetailTab = .chat
 
     init(authManager: AuthManager, connectionSupervisor: IRCConnectionSupervisor, configuration: AppConfiguration) {
         self.authManager = authManager
@@ -364,12 +374,30 @@ private struct ContentView: View {
         return VStack(spacing: 12) {
             ProviderOutageBannerView()
                 .padding(.horizontal, 4)
-            ChatTimelineView(
-                store: store,
-                settings: chatSettings,
-                isAtBottom: isAtBottomBinding(for: channel.id),
-                lastReadMessageId: lastReadBinding(for: channel.id)
-            )
+
+            Picker("View", selection: $selectedDetailTab) {
+                ForEach(DetailTab.allCases) { tab in
+                    Text(tab.rawValue).tag(tab)
+                }
+            }
+            .pickerStyle(.segmented)
+            .padding(.horizontal, 4)
+
+            Group {
+                switch selectedDetailTab {
+                case .chat:
+                    ChatTimelineView(
+                        store: store,
+                        settings: chatSettings,
+                        isAtBottom: isAtBottomBinding(for: channel.id),
+                        lastReadMessageId: lastReadBinding(for: channel.id)
+                    )
+                case .mentions:
+                    MentionsTabView(settings: chatSettings)
+                case .replies:
+                    RepliesTabView(settings: chatSettings)
+                }
+            }
             .onChange(of: store.entries.count) { _, _ in
                 guard let event = store.entries.last else { return }
                 let mention = isMention(event)
@@ -380,6 +408,7 @@ private struct ContentView: View {
                 socialTabStore.append(event: event, identity: identityStore.user)
             }
             .frame(minHeight: 240)
+
             ChatComposerView(
                 connectionStore: connectionStore,
                 session: chatSession,

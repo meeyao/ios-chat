@@ -8,6 +8,7 @@ struct ChatMessageRow: View {
     @EnvironmentObject private var emoteStore: EmoteStore
     @EnvironmentObject private var badgeStore: BadgeStore
     @ObservedObject private var badgeVisibility = BadgeVisibilitySettings.shared
+    @State private var showReplyThread = false
 
     private static let badgeProviderOrder: [ProviderID] = [.twitch, .sevenTV, .bttv, .ffz]
 
@@ -19,36 +20,62 @@ struct ChatMessageRow: View {
     }()
 
     var body: some View {
-        HStack(alignment: .firstTextBaseline, spacing: 8) {
-            if settings.showTimestamps {
-                Text(Self.timestampFormatter.string(from: message.timestamp))
-                    .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .frame(minWidth: 48, alignment: .leading)
+        VStack(alignment: .leading, spacing: 2) {
+            if let reply = message.replyMetadata {
+                replyIndicator(reply: reply)
             }
 
-            if !visibleBadges.isEmpty {
-                HStack(spacing: 4) {
-                    ForEach(visibleBadges) { badge in
-                        BadgeView(badge: badge)
+            HStack(alignment: .firstTextBaseline, spacing: 8) {
+                if settings.showTimestamps {
+                    Text(Self.timestampFormatter.string(from: message.timestamp))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .frame(minWidth: 48, alignment: .leading)
+                }
+
+                if !visibleBadges.isEmpty {
+                    HStack(spacing: 4) {
+                        ForEach(visibleBadges) { badge in
+                            BadgeView(badge: badge)
+                        }
                     }
                 }
-            }
 
-            if settings.showUsernames {
-                Button {
-                    onUsernameTap?(message.user)
-                } label: {
-                    Text(message.user.displayName)
-                        .font(.subheadline.weight(.semibold))
-                        .foregroundStyle(usernameColor ?? .primary)
+                if settings.showUsernames {
+                    Button {
+                        onUsernameTap?(message.user)
+                    } label: {
+                        Text(message.user.displayName)
+                            .font(.subheadline.weight(.semibold))
+                            .foregroundStyle(usernameColor ?? .primary)
+                    }
+                    .buttonStyle(.plain)
                 }
-                .buttonStyle(.plain)
-            }
 
-            ChatRichTextView(message: message, settings: settings, emoteStore: emoteStore)
+                ChatRichTextView(message: message, settings: settings, emoteStore: emoteStore)
+            }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .sheet(isPresented: $showReplyThread) {
+            ReplyThreadView(message: message, settings: settings)
+        }
+    }
+
+    @ViewBuilder
+    private func replyIndicator(reply: ReplyMetadata) -> some View {
+        Button {
+            showReplyThread = true
+        } label: {
+            HStack(spacing: 4) {
+                Image(systemName: "arrowshape.turn.up.left.fill")
+                    .font(.caption2)
+                Text("Replying to \(reply.parentDisplayName ?? reply.parentUserLogin ?? "unknown")")
+                    .font(.caption2)
+                    .lineLimit(1)
+            }
+            .foregroundStyle(.secondary)
+        }
+        .buttonStyle(.plain)
     }
 
     private var visibleBadges: [Badge] {
