@@ -57,6 +57,16 @@ public final class ChatSession {
             return
         }
 
+        // Update channel room state before mapping to a system message.
+        if message.command == "ROOMSTATE" {
+            if let channelParam = message.params.first {
+                let channelId = Self.normalizeChannel(channelParam)
+                var state = channelStore.state(for: channelId) ?? ChannelState()
+                state.roomState = RoomStateParser.parse(tags: message.tags, merging: state.roomState)
+                channelStore.updateState(state, for: channelId)
+            }
+        }
+
         if let event = mapper.map(message) {
             guard let channelId = event.channel else { return }
             channelStore.store(for: channelId).append(event: event)

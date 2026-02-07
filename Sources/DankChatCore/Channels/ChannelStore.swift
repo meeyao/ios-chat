@@ -173,6 +173,22 @@ public final class ChannelStore: ObservableObject {
         updateStateValue(state, for: normalizedId)
     }
 
+    /// Updates the room state for a channel, merging with the existing state.
+    ///
+    /// Typically called when a ROOMSTATE IRC message is received.
+    ///
+    /// - Parameters:
+    ///   - channelId: The channel to update.
+    ///   - roomState: The new room state to store.
+    public func updateRoomState(channelId: String, roomState: RoomState) {
+        let normalizedId = Self.normalizeId(channelId)
+        guard !normalizedId.isEmpty else { return }
+        var state = states[normalizedId] ?? ChannelState()
+        guard state.roomState != roomState else { return }
+        state.roomState = roomState
+        updateStateValue(state, for: normalizedId)
+    }
+
     public func updateConnectionState(channelId: String, state: IRCConnectionState) {
         let normalizedId = Self.normalizeId(channelId)
         guard !normalizedId.isEmpty else { return }
