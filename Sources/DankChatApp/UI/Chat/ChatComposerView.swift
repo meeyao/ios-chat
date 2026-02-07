@@ -15,15 +15,22 @@ struct ChatComposerView: View {
     @State private var selection = NSRange(location: 0, length: 0)
     @State private var isShowingEmoteMenu = false
     @State private var isShowingCommandManagement = false
+    @State private var commandSuggestions: [CommandSuggestion] = []
+    @State private var commandSuggestionTask: Task<Void, Never>?
     @StateObject private var recentsStore = EmoteRecentsStore()
     @StateObject private var menuSettings = EmoteMenuSettings()
 
     private let suggestionEngine = EmoteSuggestionEngine()
     private let commandResolver = CommandResolver()
+    private let commandSuggestionsClient = CommandSuggestionsClient()
 
     var body: some View {
         VStack(spacing: 8) {
-            if !suggestions.isEmpty {
+            if shouldShowCommandSuggestions {
+                CommandSuggestionsView(suggestions: commandSuggestions) { suggestion in
+                    applyCommandSuggestion(suggestion)
+                }
+            } else if !suggestions.isEmpty {
                 EmoteSuggestionsView(suggestions: suggestions) { emote in
                     applySuggestion(emote)
                 }
@@ -81,6 +88,12 @@ struct ChatComposerView: View {
         .sheet(isPresented: $isShowingCommandManagement) {
             CommandManagementView(commandStore: commandStore)
         }
+        .onChange(of: messageText) { _, newValue in
+            scheduleCommandSuggestions(for: newValue)
+        }
+        .onChange(of: identityStore.user?.login ?? "") { _, _ in
+            scheduleCommandSuggestions(for: messageText)
+        }
     }
 
     private var canSend: Bool {
@@ -89,6 +102,10 @@ struct ChatComposerView: View {
 
     private var trimmedMessage: String {
         messageText.trimmingCharacters(in: .whitespacesAndNewlines)
+    }
+
+    private var shouldShowCommandSuggestions: Bool {
+        trimmedMessage.hasPrefix("/") && !commandSuggestions.isEmpty
     }
 
     private var suggestions: [Emote] {
@@ -134,6 +151,7 @@ struct ChatComposerView: View {
         recentsStore.recordEmotes(in: resolved, emoteStore: emoteStore, channelLogin: channel)
         messageText = ""
         selection = NSRange(location: 0, length: 0)
+        commandSuggestions = []
     }
 
     private var currentUsername: String {
@@ -168,6 +186,41 @@ struct ChatComposerView: View {
         }
         messageText = updated.text
         selection = NSRange(location: updated.cursor, length: 0)
+    }
+
+    private func applyCommandSuggestion(_ suggestion: CommandSuggestion) {
+        guard let slashIndex = messageText.firstIndex(of: "/") else { return }
+        let endIndex = messageText.firstIndex(where: { $0.isWhitespace }) ?? messageText.endIndex
+        let start = messageText.distance(from: messageText.startIndex, to: slashIndex)
+        let length = messageText.distance(from: slashIndex, to: endIndex)
+        let range = NSRange(location: start, length: length)
+        let updated = (messageText as NSString).replacingCharacters(in: range, with: suggestion.insertion)
+        messageText = updated
+        selection = NSRange(location: start + (suggestion.insertion as NSString).length, length: 0)
+        commandSuggestions = []
+    }
+
+    private func scheduleCommandSuggestions(for input: String) {
+        commandSuggestionTask?.cancel()
+        guard input.trimmingCharacters(in: .whitespacesAndNewlines).hasPrefix("/") else {
+            commandSuggestions = []
+            return
+        }
+        let currentInput = input
+        let user = identityStore.user?.login
+        commandSuggestionTask = Task {
+            try? await Task.sleep(nanoseconds: 250_000_000)
+            guard !Task.isCancelled else { return }
+            let suggestions: [CommandSuggestion]
+            do {
+                suggestions = try await commandSuggestionsClient.suggestions(for: currentInput, user: user)
+            } catch {
+                suggestions = []
+            }
+            await MainActor.run {
+                commandSuggestions = suggestions
+            }
+        }
     }
 }
 
