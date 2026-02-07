@@ -1,10 +1,24 @@
 import SwiftUI
 import DankChatCore
 
+struct RoomStateContext {
+    let channelId: String
+    let broadcasterId: String
+    let moderatorId: String
+    let roomState: RoomState
+    let hasManageScope: Bool
+}
+
 struct ChatSettingsView: View {
     @ObservedObject var settings: ChatSettings
+    let roomStateContext: RoomStateContext?
     @EnvironmentObject private var badgeStore: BadgeStore
     @ObservedObject private var badgeVisibility = BadgeVisibilitySettings.shared
+
+    init(settings: ChatSettings, roomStateContext: RoomStateContext? = nil) {
+        self._settings = ObservedObject(wrappedValue: settings)
+        self.roomStateContext = roomStateContext
+    }
 
     var body: some View {
         VStack(alignment: .leading, spacing: 16) {
@@ -25,6 +39,16 @@ struct ChatSettingsView: View {
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
+            if let context = roomStateContext {
+                RoomStateControlsView(
+                    channelId: context.channelId,
+                    broadcasterId: context.broadcasterId,
+                    moderatorId: context.moderatorId,
+                    roomState: context.roomState,
+                    hasManageScope: context.hasManageScope
+                )
             }
 
             GroupBox("Badge Visibility") {
