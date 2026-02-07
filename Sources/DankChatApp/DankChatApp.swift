@@ -66,6 +66,7 @@ private struct ContentView: View {
     @StateObject private var userProfileStore: UserProfileStore
     @StateObject private var moderationContext: ModerationContext
     @StateObject private var commandStore: CommandStore
+    private let usersService: HelixUsersService
     @State private var chatSession: ChatSession?
     @State private var didStartMonitoring = false
     @State private var showManagement = false
@@ -74,6 +75,7 @@ private struct ContentView: View {
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
     @State private var lastIRCConfiguration: IRCConfiguration?
     @State private var selectedDetailTab: DetailTab = .chat
+    @State private var broadcasterIdCache: [String: String] = [:]
 
     init(authManager: AuthManager, connectionSupervisor: IRCConnectionSupervisor, configuration: AppConfiguration) {
         self.authManager = authManager
@@ -118,6 +120,7 @@ private struct ContentView: View {
             tokenProvider: tokenProvider
         )
         let usersService = HelixUsersService(client: helixClient)
+        self.usersService = usersService
         let identityStore = UserIdentityStore(usersService: usersService)
 
         let socialTabStore = SocialTabStore(settings: settings)
@@ -211,6 +214,7 @@ private struct ContentView: View {
             } else {
                 whisperStore.stop()
             }
+            resolveBroadcasterIdIfNeeded()
         }
         .onChange(of: channelStore.channels) { _, _ in
             syncActiveChannel()
@@ -223,6 +227,7 @@ private struct ContentView: View {
                 channelStore.markChannelRead(channelId: id)
             }
             refreshProviders()
+            resolveBroadcasterIdIfNeeded()
         }
         .onChange(of: connectionStore.state) { _, _ in
             syncConnectionStates()
@@ -398,7 +403,7 @@ private struct ContentView: View {
                 .buttonStyle(.bordered)
             }
 
-            ChatSettingsView(settings: chatSettings)
+            ChatSettingsView(settings: chatSettings, roomStateContext: roomStateContext)
         }
     }
 
@@ -470,6 +475,26 @@ private struct ContentView: View {
     private var activeChannel: Channel? {
         guard let activeId = channelStore.activeChannelId else { return nil }
         return channelStore.channels.first(where: { $0.id == activeId })
+    }
+
+    private var roomStateContext: RoomStateContext? {
+        guard let channel = activeChannel else { return nil }
+        guard let moderatorId = identityStore.user?.id else { return nil }
+        guard let broadcasterId = broadcasterIdCache[channel.id] else { return nil }
+        let roomState = channelStore.state(for: channel.id)?.roomState ?? RoomState()
+        let hasManageScope: Bool
+        if case let .signedIn(token) = authManager.state {
+            hasManageScope = token.scope.contains(HelixScope.moderatorManageChatSettings)
+        } else {
+            hasManageScope = false
+        }
+        return RoomStateContext(
+            channelId: channel.id,
+            broadcasterId: broadcasterId,
+            moderatorId: moderatorId,
+            roomState: roomState,
+            hasManageScope: hasManageScope
+        )
     }
 
     private var activeChannelBinding: Binding<String?> {
@@ -550,6 +575,24 @@ private struct ContentView: View {
             for channel in channels {
                 await emoteStore.loadChannelEmotes(channelLogin: channel.id)
                 await badgeStore.loadChannelBadges(channelLogin: channel.id)
+            }
+        }
+    }
+
+    private func resolveBroadcasterIdIfNeeded() {
+        guard let channel = activeChannel else { return }
+        guard broadcasterIdCache[channel.id] == nil else { return }
+        guard case .signedIn = authManager.state else { return }
+
+        Task {
+            do {
+                let users = try await usersService.getUsers(logins: [channel.id])
+                guard let broadcaster = users.first else { return }
+                await MainActor.run {
+                    broadcasterIdCache[channel.id] = broadcaster.id
+                }
+            } catch {
+                return
             }
         }
     }
