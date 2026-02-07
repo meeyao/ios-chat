@@ -65,6 +65,7 @@ private struct ContentView: View {
     @StateObject private var whisperStore: WhisperStore
     @StateObject private var userProfileStore: UserProfileStore
     @StateObject private var moderationContext: ModerationContext
+    @StateObject private var commandStore: CommandStore
     @State private var chatSession: ChatSession?
     @State private var didStartMonitoring = false
     @State private var showManagement = false
@@ -144,6 +145,8 @@ private struct ContentView: View {
             channelStore: channelStore
         )
 
+        let commandStore = CommandStore()
+
         _providerStatusStore = StateObject(wrappedValue: providerStatusStore)
         _emoteStore = StateObject(wrappedValue: emoteStore)
         _badgeStore = StateObject(wrappedValue: badgeStore)
@@ -152,6 +155,7 @@ private struct ContentView: View {
         _whisperStore = StateObject(wrappedValue: whisperStore)
         _userProfileStore = StateObject(wrappedValue: userProfileStore)
         _moderationContext = StateObject(wrappedValue: moderationContext)
+        _commandStore = StateObject(wrappedValue: commandStore)
     }
 
     var body: some View {
@@ -170,6 +174,7 @@ private struct ContentView: View {
         .environmentObject(whisperStore)
         .environmentObject(userProfileStore)
         .environmentObject(moderationContext)
+        .environmentObject(commandStore)
         .sheet(isPresented: $showManagement) {
             ChannelManagementView(
                 store: channelStore,

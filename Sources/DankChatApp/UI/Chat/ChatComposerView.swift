@@ -8,14 +8,18 @@ struct ChatComposerView: View {
     let channel: String
 
     @EnvironmentObject private var emoteStore: EmoteStore
+    @EnvironmentObject private var identityStore: UserIdentityStore
+    @EnvironmentObject private var commandStore: CommandStore
 
     @State private var messageText = ""
     @State private var selection = NSRange(location: 0, length: 0)
     @State private var isShowingEmoteMenu = false
+    @State private var isShowingCommandManagement = false
     @StateObject private var recentsStore = EmoteRecentsStore()
     @StateObject private var menuSettings = EmoteMenuSettings()
 
     private let suggestionEngine = EmoteSuggestionEngine()
+    private let commandResolver = CommandResolver()
 
     var body: some View {
         VStack(spacing: 8) {
@@ -30,6 +34,14 @@ struct ChatComposerView: View {
                     isShowingEmoteMenu = true
                 } label: {
                     Image(systemName: "face.smiling")
+                        .font(.title3)
+                }
+                .buttonStyle(.bordered)
+
+                Button {
+                    isShowingCommandManagement = true
+                } label: {
+                    Image(systemName: "gearshape")
                         .font(.title3)
                 }
                 .buttonStyle(.bordered)
@@ -65,6 +77,9 @@ struct ChatComposerView: View {
             .environmentObject(emoteStore)
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
+        }
+        .sheet(isPresented: $isShowingCommandManagement) {
+            CommandManagementView(commandStore: commandStore)
         }
     }
 
@@ -107,10 +122,25 @@ struct ChatComposerView: View {
 
     private func sendMessage() {
         guard canSend else { return }
-        session?.sendMessage(text: trimmedMessage, channel: channel)
-        recentsStore.recordEmotes(in: trimmedMessage, emoteStore: emoteStore, channelLogin: channel)
+        let resolved = commandResolver.resolve(
+            text: trimmedMessage,
+            commands: commandStore.commands,
+            context: CommandResolver.Context(
+                channel: channel,
+                user: currentUsername
+            )
+        )
+        session?.sendMessage(text: resolved, channel: channel)
+        recentsStore.recordEmotes(in: resolved, emoteStore: emoteStore, channelLogin: channel)
         messageText = ""
         selection = NSRange(location: 0, length: 0)
+    }
+
+    private var currentUsername: String {
+        if let user = identityStore.user {
+            return user.displayName.isEmpty ? user.login : user.displayName
+        }
+        return "user"
     }
 
     private func insertText(_ text: String) {
@@ -207,7 +237,16 @@ private struct ComposerTextView: UIViewRepresentable {
     let supervisor = IRCConnectionSupervisor()
     let session = ChatSession(supervisor: supervisor, store: store, settings: settings)
     let connectionStore = supervisor.statusStore()
+    let identityStore = UserIdentityStore(
+        usersService: HelixUsersService(
+            client: HelixAPIClient(clientId: "preview", tokenProvider: { nil })
+        )
+    )
+    let commandStore = CommandStore()
 
     return ChatComposerView(connectionStore: connectionStore, session: session, channel: "dankchat")
         .padding()
+        .environmentObject(identityStore)
+        .environmentObject(commandStore)
+        .environmentObject(store.emoteStore)
 }
