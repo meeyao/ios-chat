@@ -1,3 +1,4 @@
+#if canImport(UIKit)
 import SwiftUI
 import UIKit
 import SDWebImage
@@ -52,11 +53,12 @@ struct ChatRichTextView: UIViewRepresentable {
 
         func textView(
             _ textView: UITextView,
-            shouldInteractWith url: URL,
-            in characterRange: NSRange,
-            interaction: UITextItemInteraction
+            shouldInteractWith textItem: UITextItem,
+            defaultAction: UIAction
         ) -> Bool {
-            openURL(url)
+            if case .link(let url) = textItem.content {
+                openURL(url)
+            }
             return false
         }
 
@@ -70,7 +72,7 @@ struct ChatRichTextView: UIViewRepresentable {
         }
 
         func loadEmotes(in textView: UITextView) {
-            let attributedText = textView.attributedText
+            guard let attributedText = textView.attributedText else { return }
             let fullRange = NSRange(location: 0, length: attributedText.length)
             attributedText.enumerateAttribute(.attachment, in: fullRange) { value, range, _ in
                 guard let attachment = value as? ChatEmoteAttachment else { return }
@@ -82,7 +84,7 @@ struct ChatRichTextView: UIViewRepresentable {
                     progress: nil
                 ) { image, _, _, _, _, _ in
                     DispatchQueue.main.async { [weak textView] in
-                        guard let textView else { return }
+                        guard let textView, let currentAttributedText = textView.attributedText else { return }
                         if let image {
                             attachment.image = image
                             textView.layoutManager.invalidateLayout(
@@ -93,15 +95,15 @@ struct ChatRichTextView: UIViewRepresentable {
                             return
                         }
 
-                        guard range.location < textView.attributedText.length else { return }
-                        let currentAttachment = textView.attributedText.attribute(
+                        guard range.location < currentAttributedText.length else { return }
+                        let currentAttachment = currentAttributedText.attribute(
                             .attachment,
                             at: range.location,
                             effectiveRange: nil
                         ) as? ChatEmoteAttachment
                         guard currentAttachment === attachment else { return }
 
-                        var attributes = textView.attributedText.attributes(
+                        var attributes = currentAttributedText.attributes(
                             at: range.location,
                             effectiveRange: nil
                         )
@@ -116,3 +118,4 @@ struct ChatRichTextView: UIViewRepresentable {
         }
     }
 }
+#endif

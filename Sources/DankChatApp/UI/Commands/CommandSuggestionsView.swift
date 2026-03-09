@@ -1,7 +1,7 @@
 import SwiftUI
 import DankChatCore
 
-struct CommandSuggestionsView: View {
+struct CommandSuggestionsListView: View {
     let suggestions: [CommandSuggestion]
     let onSelect: (CommandSuggestion) -> Void
 

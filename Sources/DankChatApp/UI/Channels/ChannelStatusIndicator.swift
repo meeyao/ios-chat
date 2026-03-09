@@ -1,3 +1,4 @@
+#if canImport(UIKit)
 import SwiftUI
 import DankChatCore
 
@@ -60,3 +61,4 @@ struct ChannelStatusIndicator: View {
     }
     .padding()
 }
+#endif

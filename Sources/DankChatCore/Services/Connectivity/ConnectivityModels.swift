@@ -8,6 +8,8 @@ public enum IRCConnectionState: Equatable, Sendable {
 }
 
 public struct IRCConfiguration: Sendable {
+    public static let defaultTwitch = URL(string: "wss://irc-ws.chat.twitch.tv:443")!
+
     public let endpoint: URL
     public let oauthToken: String
     public let nickname: String

@@ -84,15 +84,14 @@ struct ChatMessageRow: View {
         }
         .sheet(isPresented: $showModerationSheet) {
             if let moderatorId = identityStore.user?.id {
-                ModerationActionSheet(
-                    message: message,
-                    channelId: message.channel,
-                    moderatorId: moderatorId,
-                    moderationService: moderationContext.moderationService,
-                    chatMessagesService: moderationContext.chatMessagesService,
-                    chatSettingsService: moderationContext.chatSettingsService,
-                    channelStore: moderationContext.channelStore
-                )
+                    ModerationActionSheet(
+                        message: message,
+                        channelId: message.channel,
+                        moderatorId: moderatorId,
+                        moderationService: moderationContext.moderationService,
+                        chatMessagesService: moderationContext.chatMessagesService,
+                        channelStore: moderationContext.channelStore
+                    )
             }
         }
     }
@@ -167,7 +166,7 @@ struct ChatMessageRow: View {
     let channelStore = ChannelStore(settings: settings)
     let moderationContext = ModerationContext(
         moderationService: moderationService,
-        chatMessagesService: chatMessagesService, chatSettingsService: <#HelixChatSettingsService#>,
+        chatMessagesService: chatMessagesService, chatSettingsService: HelixChatSettingsService(client: helixClient),
         channelStore: channelStore
     )
     let user = ChatUser(displayName: "kappa", login: "kappa")

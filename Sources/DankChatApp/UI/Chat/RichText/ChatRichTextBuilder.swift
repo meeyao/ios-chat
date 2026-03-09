@@ -1,6 +1,8 @@
+#if canImport(UIKit)
 import UIKit
 import DankChatCore
 
+@MainActor
 struct ChatRichTextBuilder {
     struct Configuration {
         let font: UIFont
@@ -156,3 +158,4 @@ final class ChatEmoteAttachment: NSTextAttachment {
         nil
     }
 }
+#endif

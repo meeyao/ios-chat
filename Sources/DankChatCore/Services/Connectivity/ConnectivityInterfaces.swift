@@ -33,9 +33,40 @@ public actor IRCCommandRateLimiter {
 @available(macOS 12.0, iOS 15.0, *)
 @MainActor
 public final class ConnectionStatusStore: ObservableObject {
+    public enum Status: String, CustomStringConvertible, Sendable {
+        case disconnected
+        case connecting
+        case connected
+
+        public var description: String {
+            rawValue.capitalized
+        }
+    }
+
+    @Published public private(set) var status: Status = .disconnected
+    @Published public private(set) var state: IRCConnectionState = .disconnected(reason: nil)
+    @Published public private(set) var logs: [String] = []
+
     public init() {}
-    public func update(state: IRCConnectionState) {}
-    public func record(_ message: String) {}
+
+    public func update(state: IRCConnectionState) {
+        self.state = state
+        switch state {
+        case .connected:
+            self.status = .connected
+        case .connecting, .reconnecting:
+            self.status = .connecting
+        case .disconnected:
+            self.status = .disconnected
+        }
+    }
+
+    public func record(_ message: String) {
+        logs.append("[\(Date())] \(message)")
+        if logs.count > 100 {
+            logs.removeFirst()
+        }
+    }
 }
 
 public final class AppLifecycleMonitor: @unchecked Sendable {

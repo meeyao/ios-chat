@@ -3,7 +3,9 @@ import UIKit
 #endif
 import DankChatCore
 import Combine
+import SwiftUI
 
+@MainActor
 struct ChatComposerView: View {
     @ObservedObject var connectionStore: ConnectionStatusStore
     let session: ChatSession?
@@ -26,10 +28,16 @@ struct ChatComposerView: View {
     private let commandResolver = CommandResolver()
     private let commandSuggestionsClient = CommandSuggestionsClient()
 
+    public init(connectionStore: ConnectionStatusStore, session: ChatSession?, channel: String) {
+        self.connectionStore = connectionStore
+        self.session = session
+        self.channel = channel
+    }
+
     var body: some View {
         VStack(spacing: 8) {
             if shouldShowCommandSuggestions {
-                CommandSuggestionsView(suggestions: commandSuggestions) { suggestion in
+                CommandSuggestionsListView(suggestions: commandSuggestions) { suggestion in
                     applyCommandSuggestion(suggestion)
                 }
             } else if !suggestions.isEmpty {
@@ -133,8 +141,7 @@ struct ChatComposerView: View {
     }
 
     private var isConnected: Bool {
-        // Simple stub for isConnected
-        return true
+        connectionStore.status == .connected
     }
 
     private func sendMessage() {
@@ -230,7 +237,7 @@ private struct ComposerTextView: UIViewRepresentable {
     @Binding var selection: NSRange
     let onCommit: () -> Void
 
-    func makeUIView(context: Context) -> UITextView {
+    @MainActor func makeUIView(context: Context) -> UITextView {
         let textView = UITextView()
         textView.delegate = context.coordinator
         textView.font = UIFont.preferredFont(forTextStyle: .body)
@@ -243,7 +250,7 @@ private struct ComposerTextView: UIViewRepresentable {
         return textView
     }
 
-    func updateUIView(_ uiView: UITextView, context: Context) {
+    @MainActor func updateUIView(_ uiView: UITextView, context: Context) {
         if uiView.text != text {
             uiView.text = text
         }
@@ -297,12 +304,13 @@ private struct ComposerTextView: View {
 #endif
 
 #Preview {
-    let settings = ChatSettings()
     let connectionStore = ConnectionStatusStore()
     
-    ChatComposerView(connectionStore: connectionStore, session: nil, channel: "dankchat")
+    return ChatComposerView(connectionStore: connectionStore, session: nil, channel: "dankchat")
         .padding()
         .environmentObject(UserIdentityStore(usersService: HelixUsersService(client: HelixAPIClient(clientId: "", tokenProvider: { nil }))))
         .environmentObject(CommandStore())
         .environmentObject(EmoteStore(twitchProvider: TwitchEmoteProvider(configuration: OAuthConfiguration(clientId: "", redirectURI: "", scopes: []), tokenProvider: { nil }), bttvProvider: BTTVEmoteProvider(), ffzProvider: FFZEmoteProvider(), sevenTVProvider: SevenTVEmoteProvider(), providerStatus: ProviderStatusStore()))
+        .environmentObject(EmoteRecentsStore())
+        .environmentObject(EmoteMenuSettings())
 }

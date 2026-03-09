@@ -1,3 +1,4 @@
+#if canImport(UIKit)
 import SwiftUI
 import UIKit
 
@@ -14,3 +15,4 @@ enum UsernameColor {
         return Color(uiColor: UIColor(red: red, green: green, blue: blue, alpha: 1))
     }
 }
+#endif

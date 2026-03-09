@@ -265,9 +265,10 @@ private struct ContentView: View {
     private func connectIRC() {
         guard case let .signedIn(token) = authManager.state else { return }
         let ircConfig = IRCConfiguration(
+            endpoint: IRCConfiguration.defaultTwitch,
+            oauthToken: token.accessToken,
             nickname: configuration.defaultNick,
-            user: configuration.defaultUser,
-            oauthToken: token.accessToken
+            user: configuration.defaultUser
         )
         lastIRCConfiguration = ircConfig
         if channelStore.channels.isEmpty, !configuration.defaultChannel.isEmpty {

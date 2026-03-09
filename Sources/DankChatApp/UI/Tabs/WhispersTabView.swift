@@ -124,7 +124,7 @@ struct WhisperThreadView: View {
                 .padding(.horizontal, 12)
                 .padding(.vertical, 8)
             }
-            .onChange(of: liveConversation?.messages.count) { _ in
+            .onChange(of: liveConversation?.messages.count) { _, _ in
                 if let lastId = liveConversation?.messages.last?.id {
                     withAnimation {
                         proxy.scrollTo(lastId, anchor: .bottom)
