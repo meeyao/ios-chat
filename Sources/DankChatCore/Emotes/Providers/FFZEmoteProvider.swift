@@ -1,6 +1,6 @@
 import Foundation
 
-public final class FFZEmoteProvider {
+public final class FFZEmoteProvider: @unchecked Sendable {
     private let urlSession: URLSession
 
     public init(urlSession: URLSession = .shared) {

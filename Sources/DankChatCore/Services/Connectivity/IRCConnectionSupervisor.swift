@@ -4,9 +4,9 @@ public final class IRCConnectionSupervisor: @unchecked Sendable {
     private let client: IRCWebSocketClient
     private let backoffPolicy: BackoffPolicy
     private let rateLimiter: IRCCommandRateLimiter
-    private let statusStore: ConnectionStatusStore
+    public let statusStore: ConnectionStatusStore
     private let networkMonitor: NetworkMonitor
-    private let lifecycleMonitor: AppLifecycleMonitor
+    private var lifecycleMonitor: AppLifecycleMonitor!
     private let queue = DispatchQueue(label: "IRCConnectionSupervisor")
 
     public var onMessage: (@Sendable (String) -> Void)?
@@ -23,7 +23,7 @@ public final class IRCConnectionSupervisor: @unchecked Sendable {
         client: IRCWebSocketClient = IRCWebSocketClient(),
         backoffPolicy: BackoffPolicy = BackoffPolicy(),
         rateLimiter: IRCCommandRateLimiter = IRCCommandRateLimiter(),
-        statusStore: ConnectionStatusStore = ConnectionStatusStore(),
+        statusStore: ConnectionStatusStore,
         networkMonitor: NetworkMonitor = NetworkMonitor()
     ) {
         self.client = client
@@ -85,10 +85,6 @@ public final class IRCConnectionSupervisor: @unchecked Sendable {
             await rateLimiter.acquire()
             await client.send(message)
         }
-    }
-
-    public func statusStore() -> ConnectionStatusStore {
-        statusStore
     }
 
     private func connectWebSocket() {

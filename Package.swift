@@ -29,8 +29,8 @@ let package = Package(
             name: "DankChatApp",
             dependencies: [
                 "DankChatCore",
-                .product(name: "SDWebImage", package: "SDWebImage"),
-                .product(name: "SDWebImageWebPCoder", package: "SDWebImageWebPCoder")
+                .product(name: "SDWebImage", package: "sdwebimage"),
+                .product(name: "SDWebImageWebPCoder", package: "sdwebimagewebpcoder")
             ],
             resources: [.process("Resources")]
         ),

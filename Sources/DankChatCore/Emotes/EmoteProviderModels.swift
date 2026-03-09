@@ -1,6 +1,6 @@
 import Foundation
 
-public enum ProviderID: String, CaseIterable, Sendable {
+public enum ProviderID: String, CaseIterable, Sendable, Codable {
     case twitch
     case sevenTV
     case bttv

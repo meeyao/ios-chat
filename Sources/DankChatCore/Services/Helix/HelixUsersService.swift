@@ -17,7 +17,7 @@ public struct HelixUser: Decodable, Equatable, Sendable {
 }
 
 /// Wraps the Helix `GET /users` endpoint.
-public final class HelixUsersService {
+public final class HelixUsersService: Sendable {
     private let client: HelixAPIClient
 
     public init(client: HelixAPIClient) {

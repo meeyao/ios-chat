@@ -7,7 +7,7 @@ import Foundation
 /// caller-provided closure.
 ///
 /// Currently scoped to `user.whisper.message` events only.
-public final class EventSubClient: NSObject, URLSessionWebSocketDelegate {
+public final class EventSubClient: NSObject, URLSessionWebSocketDelegate, @unchecked Sendable {
 
     // MARK: - Public Types
 

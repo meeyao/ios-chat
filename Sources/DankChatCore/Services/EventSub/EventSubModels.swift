@@ -43,7 +43,7 @@ public struct SubscriptionPayload: Decodable {
 // MARK: - Whisper Event
 
 /// The `event` object for a `user.whisper.message` notification.
-public struct WhisperEvent: Decodable {
+public struct WhisperEvent: Decodable, Sendable {
     /// The user ID of the whisper sender.
     public let fromUserId: String
     /// The login name of the whisper sender.
@@ -61,7 +61,7 @@ public struct WhisperEvent: Decodable {
     /// The whisper payload containing the message text.
     public let whisper: WhisperBody
 
-    public struct WhisperBody: Decodable {
+    public struct WhisperBody: Decodable, Sendable {
         /// The whisper text.
         public let text: String
     }

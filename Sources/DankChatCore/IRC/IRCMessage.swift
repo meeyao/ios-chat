@@ -1,12 +1,12 @@
 import Foundation
 
-struct IRCMessage: Equatable {
-    let tags: [String: String?]
-    let prefix: String?
-    let command: String
-    let params: [String]
+public struct IRCMessage: Equatable {
+    public let tags: [String: String?]
+    public let prefix: String?
+    public let command: String
+    public let params: [String]
 
-    init(tags: [String: String?] = [:], prefix: String? = nil, command: String, params: [String] = []) {
+    public init(tags: [String: String?] = [:], prefix: String? = nil, command: String, params: [String] = []) {
         self.tags = tags
         self.prefix = prefix
         self.command = command

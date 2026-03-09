@@ -1,6 +1,6 @@
 import Foundation
 
-public final class BTTVEmoteProvider {
+public final class BTTVEmoteProvider: @unchecked Sendable {
     private let urlSession: URLSession
 
     public init(urlSession: URLSession = .shared) {
