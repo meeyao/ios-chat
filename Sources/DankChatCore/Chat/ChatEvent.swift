@@ -1,6 +1,6 @@
 import Foundation
 
-public enum ChatEvent: Equatable {
+public enum ChatEvent: Equatable, Sendable {
     case message(ChatMessage)
     case system(SystemMessage)
 
@@ -32,7 +32,7 @@ public enum ChatEvent: Equatable {
     }
 }
 
-public struct SystemMessage: Equatable {
+public struct SystemMessage: Equatable, Sendable {
     public let text: String
     public let timestamp: Date
     public let kind: SystemMessageKind

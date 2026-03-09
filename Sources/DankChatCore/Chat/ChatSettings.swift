@@ -1,7 +1,7 @@
 import Combine
 import Foundation
 
-public final class ChatSettings: ObservableObject {
+public final class ChatSettings: ObservableObject, @unchecked Sendable {
     @Published public var showTimestamps: Bool
     @Published public var showUsernames: Bool
     @Published public var scrollbackLimit: Int

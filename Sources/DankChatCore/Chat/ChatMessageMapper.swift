@@ -1,17 +1,17 @@
 import Foundation
 
 public struct ChatMessageMapper {
-    private static let isoFormatterWithFractional: ISO8601DateFormatter = {
+    private static func makeIsoFormatterWithFractional() -> ISO8601DateFormatter {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime, .withFractionalSeconds]
         return formatter
-    }()
+    }
 
-    private static let isoFormatter: ISO8601DateFormatter = {
+    private static func makeIsoFormatter() -> ISO8601DateFormatter {
         let formatter = ISO8601DateFormatter()
         formatter.formatOptions = [.withInternetDateTime]
         return formatter
-    }()
+    }
 
     public init() {}
 
@@ -90,7 +90,7 @@ public struct ChatMessageMapper {
 
     private static func serverTimestamp(from message: IRCMessage) -> Date? {
         if let timeValue = tagValue("time", in: message) {
-            if let parsed = isoFormatterWithFractional.date(from: timeValue) ?? isoFormatter.date(from: timeValue) {
+            if let parsed = Self.makeIsoFormatterWithFractional().date(from: timeValue) ?? Self.makeIsoFormatter().date(from: timeValue) {
                 return parsed
             }
         }

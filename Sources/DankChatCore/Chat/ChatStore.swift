@@ -1,7 +1,7 @@
 import Combine
 import Foundation
 
-public final class ChatStore: ObservableObject {
+public final class ChatStore: ObservableObject, @unchecked Sendable {
     @Published public private(set) var entries: [ChatEvent] = []
 
     private let settings: ChatSettings

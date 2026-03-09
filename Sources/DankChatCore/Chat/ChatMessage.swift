@@ -1,6 +1,6 @@
 import Foundation
 
-public struct TwitchEmoteOccurrence: Equatable {
+public struct TwitchEmoteOccurrence: Equatable, @unchecked Sendable {
     public let emoteId: String
     public let range: NSRange
 
@@ -10,7 +10,7 @@ public struct TwitchEmoteOccurrence: Equatable {
     }
 }
 
-public struct TwitchBadgeTag: Equatable {
+public struct TwitchBadgeTag: Equatable, Sendable {
     public let id: String
     public let version: String
 
@@ -21,7 +21,7 @@ public struct TwitchBadgeTag: Equatable {
 }
 
 /// Metadata for a reply message, populated from IRC `reply-parent-*` tags.
-public struct ReplyMetadata: Equatable {
+public struct ReplyMetadata: Equatable, Sendable {
     /// The message ID of the parent message being replied to.
     public let parentMessageId: String
     /// The user ID of the parent message author.
@@ -48,7 +48,7 @@ public struct ReplyMetadata: Equatable {
     }
 }
 
-public struct ChatMessage: Equatable {
+public struct ChatMessage: Equatable, Sendable {
     public let id: String?
     public let user: ChatUser
     public let text: String

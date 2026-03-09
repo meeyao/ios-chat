@@ -1,6 +1,6 @@
 import Foundation
 
-public struct ChatUser: Equatable {
+public struct ChatUser: Equatable, Sendable {
     public let id: String?
     public let displayName: String
     public let login: String

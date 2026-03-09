@@ -1,6 +1,6 @@
 import Foundation
 
-public final class ChatSession {
+public final class ChatSession: @unchecked Sendable {
     private let supervisor: IRCConnectionSupervisor
     private let channelStore: ChannelStore
     private let mapper = ChatMessageMapper()
