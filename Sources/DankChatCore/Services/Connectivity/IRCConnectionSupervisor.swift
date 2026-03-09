@@ -1,5 +1,6 @@
 import Foundation
 
+@available(macOS 12.0, iOS 15.0, *)
 public final class IRCConnectionSupervisor: @unchecked Sendable {
     private let client: IRCWebSocketClient
     private let backoffPolicy: BackoffPolicy

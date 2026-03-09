@@ -14,6 +14,7 @@ public struct CommandSuggestion: Identifiable, Equatable, Sendable {
     }
 }
 
+@available(macOS 12.0, iOS 15.0, *)
 public actor CommandSuggestionsClient {
     public enum CommandSuggestionsError: Error {
         case invalidURL

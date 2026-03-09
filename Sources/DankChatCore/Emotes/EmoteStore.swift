@@ -1,6 +1,7 @@
 import Combine
 import Foundation
 
+@available(macOS 12.0, iOS 15.0, *)
 @MainActor
 public final class EmoteStore: ObservableObject {
     public struct RefreshIntervals: Sendable {

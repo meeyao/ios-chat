@@ -1,6 +1,8 @@
 import Combine
 import Foundation
 
+@available(macOS 12.0, iOS 15.0, *)
+@MainActor
 public final class ChatSettings: ObservableObject {
     @Published public var showTimestamps: Bool
     @Published public var showUsernames: Bool

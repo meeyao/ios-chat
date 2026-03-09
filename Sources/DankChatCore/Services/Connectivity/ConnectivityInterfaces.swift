@@ -1,5 +1,6 @@
 import Foundation
 
+@available(macOS 12.0, iOS 15.0, *)
 public final class IRCWebSocketClient: @unchecked Sendable {
     public var onEvent: (@Sendable (Event) -> Void)?
     
@@ -23,11 +24,13 @@ public struct BackoffPolicy: Sendable {
     }
 }
 
+@available(macOS 12.0, iOS 15.0, *)
 public actor IRCCommandRateLimiter {
     public init() {}
     public func acquire() async {}
 }
 
+@available(macOS 12.0, iOS 15.0, *)
 @MainActor
 public final class ConnectionStatusStore: ObservableObject {
     public init() {}
@@ -64,6 +67,7 @@ public final class NetworkMonitor: @unchecked Sendable {
     public func stop() {}
 }
 
+@available(macOS 12.0, iOS 15.0, *)
 public actor JoinQueue {
     public init(rateLimiter: IRCCommandRateLimiter, action: @escaping @Sendable (String) async -> Void) {}
     public func enqueue(_ channel: String) async {}

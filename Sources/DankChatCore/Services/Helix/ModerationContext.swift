@@ -5,6 +5,7 @@ import Foundation
 /// Created once in the app shell and injected into the view hierarchy.
 /// Views that need moderation capabilities (e.g. `ModerationActionSheet`) read
 /// the services and channel store from this context.
+@available(macOS 12.0, iOS 15.0, *)
 @MainActor
 public final class ModerationContext: ObservableObject {
     /// The Helix moderation service for ban/timeout/unban actions.

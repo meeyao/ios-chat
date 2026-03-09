@@ -6,6 +6,7 @@ import Foundation
 /// provide block/unblock actions.
 ///
 /// All published properties are updated on the main actor.
+@available(macOS 12.0, iOS 15.0, *)
 @MainActor
 public final class UserProfileStore: ObservableObject {
     // MARK: - Published State

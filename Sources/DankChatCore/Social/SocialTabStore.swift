@@ -6,6 +6,7 @@ import Foundation
 /// Incoming events are classified using `SocialMessageClassifier` and appended to
 /// the appropriate store. Feature tabs (Mentions, Replies) bind directly to the
 /// published chat stores.
+@available(macOS 12.0, iOS 15.0, *)
 @MainActor
 public final class SocialTabStore: ObservableObject {
     /// Chat store containing messages that mention the current user.

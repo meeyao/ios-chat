@@ -90,6 +90,7 @@ struct ChatMessageRow: View {
                     moderatorId: moderatorId,
                     moderationService: moderationContext.moderationService,
                     chatMessagesService: moderationContext.chatMessagesService,
+                    chatSettingsService: moderationContext.chatSettingsService,
                     channelStore: moderationContext.channelStore
                 )
             }
@@ -166,7 +167,7 @@ struct ChatMessageRow: View {
     let channelStore = ChannelStore(settings: settings)
     let moderationContext = ModerationContext(
         moderationService: moderationService,
-        chatMessagesService: chatMessagesService,
+        chatMessagesService: chatMessagesService, chatSettingsService: <#HelixChatSettingsService#>,
         channelStore: channelStore
     )
     let user = ChatUser(displayName: "kappa", login: "kappa")
@@ -179,7 +180,7 @@ struct ChatMessageRow: View {
         channel: "dankchat"
     )
 
-    return ChatMessageRow(message: message, settings: settings)
+    ChatMessageRow(message: message, settings: settings)
         .environmentObject(emoteStore)
         .environmentObject(badgeStore)
         .environmentObject(identityStore)

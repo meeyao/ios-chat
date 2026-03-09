@@ -5,6 +5,7 @@ import Foundation
 /// Injects `Client-Id` and `Authorization: Bearer` headers automatically.
 /// Feature-specific services (users, moderation, etc.) wrap this client
 /// with typed request/response helpers.
+@available(macOS 12.0, iOS 15.0, *)
 public final class HelixAPIClient: @unchecked Sendable {
     private let clientId: String
     private let tokenProvider: () async -> String?

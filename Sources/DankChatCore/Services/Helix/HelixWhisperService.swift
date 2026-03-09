@@ -5,6 +5,7 @@ import Foundation
 /// Whisper delivery is **not guaranteed** -- the API may return 204 (success)
 /// even when the message is silently dropped due to recipient settings,
 /// rate limits, or phone verification requirements.
+@available(macOS 12.0, iOS 15.0, *)
 public final class HelixWhisperService: Sendable {
     private let client: HelixAPIClient
 

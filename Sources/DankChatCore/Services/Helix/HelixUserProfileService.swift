@@ -47,6 +47,7 @@ public struct HelixUserProfile: Decodable, Equatable, Sendable {
 ///
 /// Unlike `HelixUsersService` (which returns lightweight `HelixUser` objects),
 /// this service returns `HelixUserProfile` with avatar, bio, and account age.
+@available(macOS 12.0, iOS 15.0, *)
 public final class HelixUserProfileService: Sendable {
     private let client: HelixAPIClient
 

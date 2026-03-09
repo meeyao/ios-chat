@@ -170,6 +170,7 @@ private struct VisibleEntry: Equatable {
     let maxY: CGFloat
 }
 
+@MainActor
 private struct VisibleEntryPreferenceKey: PreferenceKey {
     static var defaultValue: [VisibleEntry] = []
 
@@ -178,14 +179,16 @@ private struct VisibleEntryPreferenceKey: PreferenceKey {
     }
 }
 
+@MainActor
 private struct BottomAnchorPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
 
-    static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
+    nonisolated static func reduce(value: inout CGFloat, nextValue: () -> CGFloat) {
         value = nextValue()
     }
 }
 
+@MainActor
 private struct ScrollViewHeightPreferenceKey: PreferenceKey {
     static var defaultValue: CGFloat = 0
 

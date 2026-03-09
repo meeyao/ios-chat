@@ -23,6 +23,7 @@ public struct HelixFollowRecord: Decodable, Equatable, Sendable {
 ///
 /// Requires the `moderator:read:followers` scope when querying specific
 /// follower relationships. Returns follower information including follow date.
+@available(macOS 12.0, iOS 15.0, *)
 public final class HelixFollowageService: Sendable {
     private let client: HelixAPIClient
 

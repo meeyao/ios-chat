@@ -17,6 +17,7 @@ public struct HelixUser: Decodable, Equatable, Sendable {
 }
 
 /// Wraps the Helix `GET /users` endpoint.
+@available(macOS 12.0, iOS 15.0, *)
 public final class HelixUsersService: Sendable {
     private let client: HelixAPIClient
 

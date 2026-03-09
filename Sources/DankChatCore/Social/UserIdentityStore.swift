@@ -5,6 +5,7 @@ import Foundation
 ///
 /// Feature services (mentions, whispers, moderation) read `user` to obtain the
 /// authenticated user's ID, login, and display name without redundant API calls.
+@available(macOS 12.0, iOS 15.0, *)
 @MainActor
 public final class UserIdentityStore: ObservableObject {
     /// The current user's Helix identity, or `nil` if not yet resolved or signed out.

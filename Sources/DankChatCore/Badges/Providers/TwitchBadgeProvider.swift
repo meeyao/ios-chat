@@ -1,5 +1,6 @@
 import Foundation
 
+@available(macOS 12.0, iOS 15.0, *)
 public final class TwitchBadgeProvider: @unchecked Sendable {
     private let configuration: OAuthConfiguration
     private let tokenProvider: () async -> String?

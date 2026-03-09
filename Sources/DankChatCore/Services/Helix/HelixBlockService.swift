@@ -5,6 +5,7 @@ import Foundation
 /// - `PUT /users/blocks` -- blocks a user (requires `user:manage:blocked_users`).
 /// - `DELETE /users/blocks` -- unblocks a user (requires `user:manage:blocked_users`).
 /// - `GET /users/blocks` -- lists blocked users (requires `user:read:blocked_users` or `user:manage:blocked_users`).
+@available(macOS 12.0, iOS 15.0, *)
 public final class HelixBlockService: Sendable {
     private let client: HelixAPIClient
 

@@ -1,5 +1,6 @@
 import Foundation
 
+@available(macOS 12.0, iOS 15.0, *)
 @MainActor
 public final class EmoteRecentsStore: ObservableObject {
     public struct Entry: Identifiable, Codable, Equatable {

@@ -15,6 +15,7 @@ public struct ProviderOutageEvent: Identifiable, Equatable, Sendable {
     }
 }
 
+@available(macOS 12.0, iOS 15.0, *)
 @MainActor
 public final class ProviderStatusStore: ObservableObject {
     @Published public private(set) var outages: [ProviderOutageEvent] = []

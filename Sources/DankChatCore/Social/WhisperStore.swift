@@ -86,6 +86,7 @@ public struct WhisperConversation: Identifiable, Equatable {
 ///
 /// Outgoing messages are recorded with a `sent` delivery state to communicate
 /// that the Helix API accepted the request but delivery is not guaranteed.
+@available(macOS 12.0, iOS 15.0, *)
 @MainActor
 public final class WhisperStore: ObservableObject {
     /// All conversations sorted by most recent activity.

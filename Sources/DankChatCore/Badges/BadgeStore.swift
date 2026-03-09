@@ -39,6 +39,7 @@ public struct Badge: Identifiable, Equatable, Sendable {
     }
 }
 
+@available(macOS 12.0, iOS 15.0, *)
 @MainActor
 public final class BadgeStore: ObservableObject {
     @Published public private(set) var globalBadges: [ProviderID: [Badge]] = [:]

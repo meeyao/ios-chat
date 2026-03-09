@@ -1,6 +1,8 @@
 import Combine
 import Foundation
 
+@available(macOS 12.0, iOS 15.0, *)
+@MainActor
 public final class ChannelStore: ObservableObject {
     @Published public private(set) var channels: [Channel] = []
     @Published public private(set) var activeChannelId: String?

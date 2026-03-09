@@ -1,5 +1,6 @@
 import Foundation
 
+@available(macOS 12.0, iOS 15.0, *)
 public final class ChatSession: @unchecked Sendable {
     private let supervisor: IRCConnectionSupervisor
     private let channelStore: ChannelStore
@@ -14,7 +15,9 @@ public final class ChatSession: @unchecked Sendable {
         self.supervisor = supervisor
         self.channelStore = channelStore
         supervisor.onMessage = { [weak self] text in
-            self?.handleIncoming(text)
+            Task { @MainActor in
+                self?.handleIncoming(text)
+            }
         }
 
         if let channel {
@@ -37,12 +40,12 @@ public final class ChatSession: @unchecked Sendable {
         supervisor.sendRaw("PART #\(target)")
     }
 
-    private func handleIncoming(_ text: String) {
+    @MainActor private func handleIncoming(_ text: String) {
         buffer.append(text)
         drainBuffer()
     }
 
-    private func drainBuffer() {
+    @MainActor private func drainBuffer() {
         while let range = buffer.range(of: "\r\n") {
             let line = String(buffer[..<range.lowerBound])
             buffer.removeSubrange(..<range.upperBound)
@@ -50,7 +53,7 @@ public final class ChatSession: @unchecked Sendable {
         }
     }
 
-    private func handleLine(_ line: String) {
+    @MainActor private func handleLine(_ line: String) {
         guard let message = IRCMessageParser.parse(line: line) else { return }
         if message.command == "PING" {
             supervisor.sendRaw("PONG :tmi.twitch.tv")

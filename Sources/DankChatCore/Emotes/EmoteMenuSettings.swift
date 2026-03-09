@@ -1,5 +1,6 @@
 import Foundation
 
+@available(macOS 10.15, iOS 13.0, *)
 @MainActor
 public final class EmoteMenuSettings: ObservableObject {
     public enum RecentsOrdering: String, CaseIterable, Codable {
