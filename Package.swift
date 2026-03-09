@@ -32,7 +32,10 @@ let package = Package(
                 .product(name: "SDWebImage", package: "sdwebimage"),
                 .product(name: "SDWebImageWebPCoder", package: "sdwebimagewebpcoder")
             ],
-            resources: [.process("Resources")]
+            resources: [.process("Resources")],
+            swiftSettings: [
+                .define("DEBUG", .when(configuration: .debug))
+            ]
         ),
         .testTarget(
             name: "DankChatCoreTests",

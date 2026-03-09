@@ -61,7 +61,7 @@ struct ChatMessageRow: View {
         }
         .frame(maxWidth: .infinity, alignment: .leading)
         .contextMenu {
-            if let moderatorId = identityStore.user?.id {
+            if (identityStore.user?.id) != nil {
                 Button {
                     showModerationSheet = true
                 } label: {

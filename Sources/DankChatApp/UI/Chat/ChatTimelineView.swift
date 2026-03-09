@@ -66,7 +66,7 @@ struct ChatTimelineView: View {
             .onAppear {
                 restoreScroll(using: proxy)
             }
-            .coordinateSpace(name: "scroll")
+            .coordinateSpace(.named("scroll"))
             .background(
                 GeometryReader { geometry in
                     Color.clear.preference(
@@ -76,11 +76,13 @@ struct ChatTimelineView: View {
                 }
             )
             .onPreferenceChange(ScrollViewHeightPreferenceKey.self) { height in
-                scrollViewHeight = height
+                if abs(scrollViewHeight - height) > 0.1 {
+                    scrollViewHeight = height
+                }
             }
             .onPreferenceChange(BottomAnchorPreferenceKey.self) { bottomMaxY in
                 guard scrollViewHeight > 0 else { return }
-                let atBottom = bottomMaxY <= scrollViewHeight + 8
+                let atBottom = bottomMaxY <= scrollViewHeight + 10
                 if isAtBottom != atBottom {
                     isAtBottom = atBottom
                 }
