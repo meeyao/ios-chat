@@ -9,7 +9,9 @@ struct ChatMessageRow: View {
     @EnvironmentObject private var userProfileStore: UserProfileStore
     @EnvironmentObject private var identityStore: UserIdentityStore
     @EnvironmentObject private var moderationContext: ModerationContext
+    @EnvironmentObject private var highlightStore: HighlightStore
     @ObservedObject private var badgeVisibility = BadgeVisibilitySettings.shared
+    private static let mentionClassifier = SocialMessageClassifier()
     @State private var showReplyThread = false
     @State private var showUserPopup = false
     @State private var showModerationSheet = false
@@ -60,6 +62,12 @@ struct ChatMessageRow: View {
             }
         }
         .frame(maxWidth: .infinity, alignment: .leading)
+        .background {
+            if let highlightColor {
+                RoundedRectangle(cornerRadius: 6)
+                    .fill(highlightColor.opacity(0.18))
+            }
+        }
         .contextMenu {
             if let moderatorId = identityStore.user?.id {
                 Button {
@@ -136,6 +144,16 @@ struct ChatMessageRow: View {
     private var usernameColor: Color? {
         UsernameColor.color(from: message.user.color)
     }
+
+    private var highlightColor: Color? {
+        if let rule = highlightStore.match(for: message) {
+            return UsernameColor.color(from: rule.colorHex) ?? .orange
+        }
+        if Self.mentionClassifier.isMention(message: message, identity: identityStore.user) {
+            return .orange
+        }
+        return nil
+    }
 }
 
 #Preview {
@@ -181,6 +199,7 @@ struct ChatMessageRow: View {
     )
 
     ChatMessageRow(message: message, settings: settings)
+        .environmentObject(HighlightStore())
         .environmentObject(emoteStore)
         .environmentObject(badgeStore)
         .environmentObject(identityStore)

@@ -91,6 +91,9 @@ public final class WhisperStore: ObservableObject {
     /// All conversations sorted by most recent activity.
     @Published public private(set) var conversations: [WhisperConversation] = []
 
+    /// Called for each incoming whisper, on the main actor.
+    public var onIncomingWhisper: (@MainActor (WhisperMessage) -> Void)?
+
     private let whisperService: HelixWhisperService
     private let eventSubClient: EventSubClient
 
@@ -220,6 +223,7 @@ public final class WhisperStore: ObservableObject {
             otherUserLogin: whisperEvent.fromUserLogin,
             otherUserName: whisperEvent.fromUserName
         )
+        onIncomingWhisper?(message)
     }
 
     private func appendMessage(_ message: WhisperMessage, otherUserId: String, otherUserLogin: String, otherUserName: String) {

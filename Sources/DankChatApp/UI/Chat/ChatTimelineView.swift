@@ -6,6 +6,7 @@ struct ChatTimelineView: View {
     @ObservedObject var settings: ChatSettings
     @Binding var isAtBottom: Bool
     @Binding var lastReadMessageId: String?
+    @EnvironmentObject private var ignoreStore: IgnoreStore
 
     @State private var scrollViewHeight: CGFloat = 0
     @State private var didRestorePosition = false
@@ -21,7 +22,7 @@ struct ChatTimelineView: View {
         ScrollViewReader { proxy in
             ScrollView {
                 LazyVStack(alignment: .leading, spacing: 6) {
-                    ForEach(store.entries.indices, id: \.self) { index in
+                    ForEach(visibleIndices, id: \.self) { index in
                         let event = store.entries[index]
                         let entryId = entryId(for: index, event: event)
                         row(for: event)
@@ -134,8 +135,15 @@ struct ChatTimelineView: View {
         }
     }
 
+    private var visibleIndices: [Int] {
+        store.entries.indices.filter { index in
+            guard case .message(let message) = store.entries[index] else { return true }
+            return !ignoreStore.isIgnored(message)
+        }
+    }
+
     private func latestEntryId() -> String? {
-        guard let index = store.entries.indices.last else { return nil }
+        guard let index = visibleIndices.last else { return nil }
         return entryId(for: index, event: store.entries[index])
     }
 
@@ -197,8 +205,8 @@ private struct ScrollViewHeightPreferenceKey: PreferenceKey {
 #Preview {
     let settings = ChatSettings()
     let store = ChatStore(settings: settings)
-    store.append(event: .system(SystemMessage(text: "Connected", timestamp: Date(), kind: .notice, channel: nil)))
-    store.append(event: .message(ChatMessage(
+    let _ = store.append(event: .system(SystemMessage(text: "Connected", timestamp: Date(), kind: .notice, channel: nil)))
+    let _ = store.append(event: .message(ChatMessage(
         id: "1",
         user: ChatUser(displayName: "kappa", login: "kappa"),
         text: "Hello https://twitch.tv",
@@ -207,11 +215,12 @@ private struct ScrollViewHeightPreferenceKey: PreferenceKey {
         channel: "dankchat"
     )))
 
-    return ChatTimelineView(
+    ChatTimelineView(
         store: store,
         settings: settings,
         isAtBottom: .constant(true),
         lastReadMessageId: .constant(nil)
     )
+        .environmentObject(IgnoreStore())
         .padding()
 }

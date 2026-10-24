@@ -66,10 +66,14 @@ private struct ContentView: View {
     @StateObject private var userProfileStore: UserProfileStore
     @StateObject private var moderationContext: ModerationContext
     @StateObject private var commandStore: CommandStore
+    @StateObject private var highlightStore: HighlightStore
+    @StateObject private var ignoreStore: IgnoreStore
+    @StateObject private var notificationService: ChatNotificationService
     private let usersService: HelixUsersService
     @State private var chatSession: ChatSession?
     @State private var didStartMonitoring = false
     @State private var showManagement = false
+    @State private var showNotificationSettings = false
     @State private var columnVisibility = NavigationSplitViewVisibility.all
     @SceneStorage("activeChannelId") private var storedActiveChannelId: String?
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -84,9 +88,15 @@ private struct ContentView: View {
 
         let settings = ChatSettings()
         let channelStore = ChannelStore(settings: settings)
+        let highlightStore = HighlightStore()
+        let ignoreStore = IgnoreStore()
+        let notificationService = ChatNotificationService()
         _chatSettings = StateObject(wrappedValue: settings)
         _channelStore = StateObject(wrappedValue: channelStore)
         _connectionStore = StateObject(wrappedValue: connectionSupervisor.statusStore)
+        _highlightStore = StateObject(wrappedValue: highlightStore)
+        _ignoreStore = StateObject(wrappedValue: ignoreStore)
+        _notificationService = StateObject(wrappedValue: notificationService)
 
         let providerStatusStore = ProviderStatusStore()
         let tokenProvider: () async -> String? = { [weak authManager] in
@@ -128,6 +138,10 @@ private struct ContentView: View {
         let whisperService = HelixWhisperService(client: helixClient)
         let eventSubClient = EventSubClient(helixClient: helixClient)
         let whisperStore = WhisperStore(whisperService: whisperService, eventSubClient: eventSubClient)
+        whisperStore.onIncomingWhisper = { [weak notificationService] message in
+            guard !ignoreStore.isIgnored(login: message.fromUserLogin, displayName: message.fromUserName) else { return }
+            notificationService?.notifyWhisper(message)
+        }
 
         let profileService = HelixUserProfileService(client: helixClient)
         let followageService = HelixFollowageService(client: helixClient)
@@ -178,6 +192,12 @@ private struct ContentView: View {
         .environmentObject(userProfileStore)
         .environmentObject(moderationContext)
         .environmentObject(commandStore)
+        .environmentObject(highlightStore)
+        .environmentObject(ignoreStore)
+        .environmentObject(notificationService)
+        .sheet(isPresented: $showNotificationSettings) {
+            NotificationsSettingsView()
+        }
         .sheet(isPresented: $showManagement) {
             ChannelManagementView(
                 store: channelStore,
@@ -189,6 +209,7 @@ private struct ContentView: View {
             if !didStartMonitoring {
                 didStartMonitoring = true
                 connectionSupervisor.startMonitoring()
+                await notificationService.requestAuthorization()
                 authManager.restoreSession()
                 await authManager.refreshIfNeeded()
                 if case .signedIn = authManager.state {
@@ -404,6 +425,13 @@ private struct ContentView: View {
             }
 
             ChatSettingsView(settings: chatSettings, roomStateContext: roomStateContext)
+
+            Button {
+                showNotificationSettings = true
+            } label: {
+                Label("Notifications & Highlights", systemImage: "bell.badge")
+            }
+            .buttonStyle(.bordered)
         }
     }
 
@@ -455,12 +483,7 @@ private struct ContentView: View {
             }
             .onChange(of: store.entries.count) { _, _ in
                 guard let event = store.entries.last else { return }
-                let mention = isMention(event)
-                channelStore.recordIncomingEvent(
-                    channelId: channel.id,
-                    isMention: mention
-                )
-                socialTabStore.append(event: event, identity: identityStore.user)
+                handleIncomingEvent(event, channelId: channel.id)
             }
             .frame(minHeight: 240)
 
@@ -598,6 +621,27 @@ private struct ContentView: View {
     }
 
     private static let classifier = SocialMessageClassifier()
+
+    private func handleIncomingEvent(_ event: ChatEvent, channelId: String) {
+        guard case .message(let message) = event else { return }
+        guard !ignoreStore.isIgnored(message) else { return }
+
+        let mention = isMention(event)
+        let highlight = highlightStore.match(for: event)
+        let isHighlighted = mention || highlight != nil
+
+        channelStore.recordIncomingEvent(
+            channelId: channelId,
+            isMention: isHighlighted
+        )
+        socialTabStore.append(event: event, identity: identityStore.user)
+
+        if mention {
+            notificationService.notifyMention(message: message, channel: channelId)
+        } else if let highlight, highlight.createNotification {
+            notificationService.notifyHighlight(message: message, channel: channelId)
+        }
+    }
 
     private func isMention(_ event: ChatEvent) -> Bool {
         guard case .message(let message) = event else { return false }

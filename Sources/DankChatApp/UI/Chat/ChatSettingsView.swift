@@ -348,7 +348,7 @@ struct RoomStateControlsView: View {
     let configuration = OAuthConfiguration(clientId: "", redirectURI: "", scopes: [])
     let twitchBadgeProvider = TwitchBadgeProvider(configuration: configuration, tokenProvider: { nil })
     let badgeStore = BadgeStore(twitchProvider: twitchBadgeProvider)
-    return ChatSettingsView(settings: settings)
+    ChatSettingsView(settings: settings)
         .environmentObject(badgeStore)
         .padding()
 }
