@@ -1,6 +1,9 @@
 import Foundation
 
 public final class ChatSession: @unchecked Sendable {
+    /// Called on the main actor for every mapped chat event.
+    public var onEvent: (@MainActor (ChatEvent, String) -> Void)?
+
     private let supervisor: IRCConnectionSupervisor
     private let channelStore: ChannelStore
     private let mapper = ChatMessageMapper()
@@ -14,7 +17,9 @@ public final class ChatSession: @unchecked Sendable {
         self.supervisor = supervisor
         self.channelStore = channelStore
         supervisor.onMessage = { [weak self] text in
-            self?.handleIncoming(text)
+            Task { @MainActor in
+                self?.handleIncoming(text)
+            }
         }
 
         if let channel {
@@ -37,11 +42,13 @@ public final class ChatSession: @unchecked Sendable {
         supervisor.sendRaw("PART #\(target)")
     }
 
+    @MainActor
     private func handleIncoming(_ text: String) {
         buffer.append(text)
         drainBuffer()
     }
 
+    @MainActor
     private func drainBuffer() {
         while let range = buffer.range(of: "\r\n") {
             let line = String(buffer[..<range.lowerBound])
@@ -50,6 +57,7 @@ public final class ChatSession: @unchecked Sendable {
         }
     }
 
+    @MainActor
     private func handleLine(_ line: String) {
         guard let message = IRCMessageParser.parse(line: line) else { return }
         if message.command == "PING" {
@@ -70,6 +78,7 @@ public final class ChatSession: @unchecked Sendable {
         if let event = mapper.map(message) {
             guard let channelId = event.channel else { return }
             channelStore.store(for: channelId).append(event: event)
+            onEvent?(event, channelId)
         }
     }
 

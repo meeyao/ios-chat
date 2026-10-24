@@ -6,11 +6,6 @@
     <string></string>
     <key>RedirectURI</key>
     <string></string>
-    <key>Scopes</key>
-    <array>
-        <string>chat:read</string>
-        <string>chat:edit</string>
-    </array>
     <key>DefaultNick</key>
     <string></string>
     <key>DefaultUser</key>

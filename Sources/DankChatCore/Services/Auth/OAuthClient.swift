@@ -145,7 +145,7 @@ public final class OAuthClient: @unchecked Sendable {
     }
 }
 
-public enum OAuthError: Error {
+public enum OAuthError: Error, LocalizedError {
     case invalidCallback
     case invalidState
     case httpError(statusCode: Int, payload: Data)
@@ -154,6 +154,28 @@ public enum OAuthError: Error {
     case slowDown
     case deviceCodeExpired
     case accessDenied
+
+    public var errorDescription: String? {
+        switch self {
+        case .invalidCallback:
+            return "Twitch returned an invalid OAuth callback."
+        case .invalidState:
+            return "OAuth state did not match."
+        case .httpError(let statusCode, let payload):
+            let body = String(data: payload, encoding: .utf8) ?? ""
+            return "Twitch returned HTTP \(statusCode). \(body.prefix(200))"
+        case .missingRefreshToken:
+            return "No refresh token is available."
+        case .authorizationPending:
+            return "Waiting for authorization."
+        case .slowDown:
+            return "Twitch asked the client to poll more slowly."
+        case .deviceCodeExpired:
+            return "The login code expired."
+        case .accessDenied:
+            return "Twitch authorization was denied."
+        }
+    }
 }
 
 /// A Twitch device-code login challenge.

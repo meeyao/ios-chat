@@ -75,11 +75,13 @@ private struct ContentView: View {
     @StateObject private var streamStore: StreamStore
     @StateObject private var ttsService: TextToSpeechService
     private let usersService: HelixUsersService
+    private let eventRouter: ChatEventRouter
     @State private var chatSession: ChatSession?
     @State private var didStartMonitoring = false
     @State private var showManagement = false
     @State private var showSettings = false
     @State private var showChatSettings = false
+    @State private var devicePrompt: AuthManager.DeviceLoginPrompt?
     @State private var columnVisibility = NavigationSplitViewVisibility.all
     @SceneStorage("activeChannelId") private var storedActiveChannelId: String?
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -187,6 +189,21 @@ private struct ContentView: View {
         _userProfileStore = StateObject(wrappedValue: userProfileStore)
         _moderationContext = StateObject(wrappedValue: moderationContext)
         _commandStore = StateObject(wrappedValue: commandStore)
+
+        let fallbackTokens = [configuration.defaultNick, configuration.defaultUser]
+            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
+            .filter { !$0.isEmpty }
+        self.eventRouter = ChatEventRouter(
+            channelStore: channelStore,
+            socialTabStore: socialTabStore,
+            identityStore: identityStore,
+            highlightStore: highlightStore,
+            ignoreStore: ignoreStore,
+            notificationService: notificationService,
+            toolsStore: toolsStore,
+            ttsService: ttsService,
+            fallbackMentionTokens: fallbackTokens
+        )
     }
 
     var body: some View {
@@ -197,6 +214,7 @@ private struct ContentView: View {
                 ipadLayout
             }
         }
+        .environmentObject(authManager)
         .environmentObject(emoteStore)
         .environmentObject(badgeStore)
         .environmentObject(providerStatusStore)
@@ -216,6 +234,15 @@ private struct ContentView: View {
         .environmentObject(ttsService)
         .sheet(isPresented: $showSettings) {
             AppSettingsView()
+                .environmentObject(authManager)
+                .environmentObject(chatSettings)
+                .environmentObject(highlightStore)
+                .environmentObject(ignoreStore)
+                .environmentObject(notificationService)
+                .environmentObject(toolsStore)
+                .environmentObject(recentUploadsStore)
+                .environmentObject(streamStore)
+                .environmentObject(commandStore)
         }
         .sheet(isPresented: $showChatSettings) {
             NavigationStack {
@@ -231,18 +258,17 @@ private struct ContentView: View {
                     }
                 }
             }
+            .environmentObject(badgeStore)
+            .environmentObject(moderationContext)
         }
-        .sheet(item: Binding(
-            get: { authManager.devicePrompt },
-            set: { prompt in
-                if prompt == nil {
-                    authManager.cancelLogin()
-                }
-            }
-        )) { prompt in
+        .sheet(item: $devicePrompt) { prompt in
             DeviceLoginView(prompt: prompt) {
                 authManager.cancelLogin()
+                devicePrompt = nil
             }
+        }
+        .onChange(of: authManager.devicePrompt) { prompt in
+            devicePrompt = prompt
         }
         .sheet(isPresented: $showManagement) {
             ChannelManagementView(
@@ -276,6 +302,9 @@ private struct ContentView: View {
                 whisperStore.clearAll()
                 streamStore.stop()
                 ttsService.stop()
+                chatSession = nil
+                lastIRCConfiguration = nil
+                connectionSupervisor.disconnect(reason: "Signed out")
             case .signingIn:
                 break
             }
@@ -283,6 +312,9 @@ private struct ContentView: View {
         .onChange(of: identityStore.user) { newUser in
             if let user = newUser {
                 whisperStore.start(userId: user.id, userLogin: user.login, userName: user.displayName)
+                if isSignedIn, chatSession == nil {
+                    connectIRC()
+                }
             } else {
                 whisperStore.stop()
             }
@@ -326,22 +358,6 @@ private struct ContentView: View {
         return false
     }
 
-    private var authStateText: String {
-        switch authManager.state {
-        case .signedOut:
-            return "Signed out"
-        case .signingIn:
-            return "Signing in..."
-        case .signedIn(let token):
-            if let user = identityStore.user {
-                return "Signed in as \(user.displayName)"
-            }
-            return "Signed in (\(token.scope.count) scopes)"
-        case .error(let message):
-            return "Auth error: \(message)"
-        }
-    }
-
     private func connectIRC() {
         guard case let .signedIn(token) = authManager.state else { return }
         guard let user = identityStore.user else { return }
@@ -358,11 +374,15 @@ private struct ContentView: View {
         if channelStore.activeChannelId == nil {
             channelStore.setActive(id: channels.first ?? "")
         }
-        chatSession = ChatSession(
+        let session = ChatSession(
             supervisor: connectionSupervisor,
             channelStore: channelStore,
             channel: channelStore.activeChannelId
         )
+        session.onEvent = { [eventRouter] event, channelId in
+            eventRouter.handle(event, channelId: channelId)
+        }
+        chatSession = session
         connectionSupervisor.connect(configuration: ircConfig, channels: channels)
     }
 
@@ -374,39 +394,11 @@ private struct ContentView: View {
     }
 
     private var phoneLayout: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            headerView
+        VStack(alignment: .leading, spacing: 8) {
+            topBar
 
-            ChannelTabStripView(
-                store: channelStore,
-                selection: activeChannelBinding,
-                connectionState: { channel in
-                    channelStore.state(for: channel.id)?.connectionState ?? .disconnected(reason: nil)
-                },
-                onRename: handleRename,
-                onRemove: handleRemove,
-                onTogglePin: { channel in
-                    channelStore.setPinned(id: channel.id, isPinned: !channel.isPinned)
-                },
-                onReconnect: { _ in reconnectNow() },
-                onManage: { showManagement = true }
-            )
-
-            if let channel = activeChannel {
-                channelDetail(for: channel)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-            } else {
-                emptyStateView
-            }
-        }
-        .padding()
-    }
-
-    private var ipadLayout: some View {
-        NavigationSplitView(columnVisibility: $columnVisibility) {
-            VStack(alignment: .leading, spacing: 12) {
-                headerView
-                ChannelListView(
+            if isSignedIn {
+                ChannelTabStripView(
                     store: channelStore,
                     selection: activeChannelBinding,
                     connectionState: { channel in
@@ -420,10 +412,47 @@ private struct ContentView: View {
                     onReconnect: { _ in reconnectNow() },
                     onManage: { showManagement = true }
                 )
+
+                if let channel = activeChannel {
+                    channelDetail(for: channel)
+                        .frame(maxWidth: .infinity, maxHeight: .infinity)
+                } else {
+                    emptyStateView
+                }
+            } else {
+                signedOutView
+            }
+        }
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
+    }
+
+    private var ipadLayout: some View {
+        NavigationSplitView(columnVisibility: $columnVisibility) {
+            VStack(alignment: .leading, spacing: 8) {
+                topBar
+                if isSignedIn {
+                    ChannelListView(
+                        store: channelStore,
+                        selection: activeChannelBinding,
+                        connectionState: { channel in
+                            channelStore.state(for: channel.id)?.connectionState ?? .disconnected(reason: nil)
+                        },
+                        onRename: handleRename,
+                        onRemove: handleRemove,
+                        onTogglePin: { channel in
+                            channelStore.setPinned(id: channel.id, isPinned: !channel.isPinned)
+                        },
+                        onReconnect: { _ in reconnectNow() },
+                        onManage: { showManagement = true }
+                    )
+                }
             }
             .padding(.top, 8)
         } detail: {
-            if let channel = activeChannel {
+            if !isSignedIn {
+                signedOutView
+            } else if let channel = activeChannel {
                 channelDetail(for: channel)
                     .padding()
             } else {
@@ -433,74 +462,80 @@ private struct ContentView: View {
         }
     }
 
-    private var headerView: some View {
-        VStack(alignment: .leading, spacing: 8) {
-            HStack {
-                Text("DankChat iOS")
-                    .font(.title3)
-                    .bold()
+    private var topBar: some View {
+        HStack(spacing: 8) {
+            Text("DankChat")
+                .font(.headline)
 
-                Spacer()
-
-                Button {
-                    showSettings = true
-                } label: {
-                    Image(systemName: "gearshape")
-                        .font(.title3)
-                }
-                .buttonStyle(.bordered)
+            if isSignedIn {
+                ConnectionStatusView(store: connectionStore)
             }
+
+            Spacer()
+
+            Button {
+                showSettings = true
+            } label: {
+                Image(systemName: "gearshape")
+                    .font(.body)
+            }
+            .buttonStyle(.bordered)
+            .accessibilityLabel("Settings")
+        }
+    }
+
+    private var signedOutView: some View {
+        VStack(spacing: 14) {
+            Spacer()
+
+            Image(systemName: "bubble.left.and.bubble.right.fill")
+                .font(.system(size: 54))
+                .foregroundStyle(.purple)
+
+            Text("DankChat")
+                .font(.largeTitle.weight(.bold))
+
+            Text("Twitch chat for iPhone and iPad")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
 
             if !configuration.isConfigured {
-                Text("Add your Twitch Client ID in Settings → Twitch Login, then restart the app.")
+                Text("Add your Twitch Client ID in Settings → Twitch Login first.")
                     .font(.footnote)
+                    .multilineTextAlignment(.center)
                     .foregroundStyle(.secondary)
+                    .padding(.horizontal)
             }
 
-            HStack(spacing: 8) {
-                ConnectionStatusView(store: connectionStore)
-                Spacer()
-                Text(authStateText)
+            Button {
+                authManager.beginLogin()
+            } label: {
+                Label("Sign In with Twitch", systemImage: "person.crop.circle.badge.checkmark")
+            }
+            .buttonStyle(.borderedProminent)
+            .disabled(!configuration.isConfigured || isSigningIn)
+
+            if isSigningIn {
+                ProgressView("Waiting for Twitch...")
+                    .font(.footnote)
+            }
+
+            if case .error(let message) = authManager.state {
+                Text(message)
                     .font(.caption)
-                    .foregroundStyle(.secondary)
-                    .lineLimit(1)
+                    .foregroundStyle(.red)
+                    .multilineTextAlignment(.center)
+                    .padding(.horizontal)
             }
 
-            HStack(spacing: 8) {
-                if isSignedIn {
-                    Button("Connect IRC") {
-                        connectIRC()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(identityStore.user == nil)
-
-                    Button("Disconnect") {
-                        connectionSupervisor.disconnect(reason: "User requested")
-                    }
-                    .buttonStyle(.bordered)
-                    .disabled(!isConnected)
-                } else {
-                    Button("Sign In") {
-                        authManager.beginLogin()
-                    }
-                    .buttonStyle(.borderedProminent)
-                    .disabled(!configuration.isConfigured || isSigningIn)
-
-                    if isSigningIn {
-                        ProgressView()
-                            .controlSize(.small)
-                    }
-                }
-
-                Spacer()
-
-                Button("Sign Out") {
-                    authManager.signOut()
-                }
-                .buttonStyle(.bordered)
-                .disabled(!isSignedIn)
+            Button("Settings") {
+                showSettings = true
             }
+            .buttonStyle(.bordered)
+
+            Spacer()
         }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var emptyStateView: some View {
@@ -560,10 +595,6 @@ private struct ContentView: View {
                 case .whispers:
                     WhispersTabView()
                 }
-            }
-            .onChange(of: store.entries.count) { _ in
-                guard let event = store.entries.last else { return }
-                handleIncomingEvent(event, channelId: channel.id)
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity)
             .layoutPriority(1)
@@ -704,47 +735,4 @@ private struct ContentView: View {
         }
     }
 
-    private static let classifier = SocialMessageClassifier()
-
-    private func handleIncomingEvent(_ event: ChatEvent, channelId: String) {
-        guard case .message(let message) = event else { return }
-        guard !ignoreStore.isIgnored(message) else { return }
-
-        let mention = isMention(event)
-        let highlight = highlightStore.match(for: event)
-        let isHighlighted = mention || highlight != nil
-
-        channelStore.recordIncomingEvent(
-            channelId: channelId,
-            isMention: isHighlighted
-        )
-        socialTabStore.append(event: event, identity: identityStore.user)
-
-        if mention {
-            notificationService.notifyMention(message: message, channel: channelId)
-        } else if let highlight, highlight.createNotification {
-            notificationService.notifyHighlight(message: message, channel: channelId)
-        }
-
-        if channelId == channelStore.activeChannelId {
-            ttsService.speak(message, settings: toolsStore.settings)
-        }
-    }
-
-    private func isMention(_ event: ChatEvent) -> Bool {
-        guard case .message(let message) = event else { return false }
-
-        // Prefer authenticated identity from the identity store.
-        if let identity = identityStore.user {
-            return Self.classifier.isMention(message: message, identity: identity)
-        }
-
-        // Fall back to static config defaults when not signed in.
-        let tokens = [configuration.defaultNick, configuration.defaultUser]
-            .map { $0.trimmingCharacters(in: .whitespacesAndNewlines) }
-            .filter { !$0.isEmpty }
-        guard !tokens.isEmpty else { return false }
-        let lowerText = message.text.lowercased()
-        return tokens.contains { lowerText.contains($0.lowercased()) }
-    }
 }

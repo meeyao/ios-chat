@@ -1,5 +1,6 @@
 import Combine
 import Foundation
+import os
 
 @MainActor
 public final class AuthManager: ObservableObject {
@@ -31,6 +32,7 @@ public final class AuthManager: ObservableObject {
     private let authorizer: OAuthAuthorizing
     private let stateGenerator: () -> String
     private var loginTask: Task<Void, Never>?
+    private let logger = Logger(subsystem: "com.meeyao.dankchat", category: "Auth")
 
     public init(
         configuration: OAuthConfiguration,
@@ -88,6 +90,7 @@ public final class AuthManager: ObservableObject {
                 userCode: challenge.userCode,
                 verificationURI: verificationURL
             )
+            logger.info("Device login started, code \(challenge.userCode, privacy: .public)")
 
             let deadline = Date().addingTimeInterval(TimeInterval(challenge.expiresIn))
             var interval = UInt64(max(challenge.interval, 1))
@@ -98,7 +101,13 @@ public final class AuthManager: ObservableObject {
 
                 do {
                     let token = try await oauthClient.pollDeviceToken(deviceCode: challenge.deviceCode)
-                    try tokenStore.writeToken(token)
+                    logger.info("Device login token received")
+                    do {
+                        try tokenStore.writeToken(token)
+                    } catch {
+                        // A keychain failure must not hide a successful Twitch login.
+                        logger.error("Token persistence failed: \(String(describing: error), privacy: .public)")
+                    }
                     devicePrompt = nil
                     state = .signedIn(token)
                     return
@@ -114,8 +123,9 @@ public final class AuthManager: ObservableObject {
         } catch is CancellationError {
             // The user cancelled; cancelLogin already reset the state.
         } catch {
+            logger.error("Device login failed: \(String(describing: error), privacy: .public)")
             devicePrompt = nil
-            state = .error("Login failed")
+            state = .error("Login failed: \(error.localizedDescription)")
         }
     }
 

@@ -50,7 +50,7 @@ struct StreamPanelView: View {
                         preventReloads: streamStore.settings.preventStreamReloads
                     )
                     .id(streamStore.settings.enablePiP)
-                    .frame(height: 220)
+                    .aspectRatio(16.0 / 9.0, contentMode: .fit)
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }

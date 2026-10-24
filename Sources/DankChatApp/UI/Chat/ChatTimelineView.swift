@@ -13,15 +13,14 @@ struct ChatTimelineView: View {
 
     private static let timestampFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        formatter.dateStyle = .none
+        formatter.dateFormat = "HH:mm"
         return formatter
     }()
 
     var body: some View {
         ScrollViewReader { proxy in
             ScrollView {
-                LazyVStack(alignment: .leading, spacing: 6) {
+                LazyVStack(alignment: .leading, spacing: 4) {
                     ForEach(visibleIndices, id: \.self) { index in
                         let event = store.entries[index]
                         let entryId = entryId(for: index, event: event)
@@ -64,8 +63,24 @@ struct ChatTimelineView: View {
                         )
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
-                .padding(.vertical, 8)
-                .padding(.horizontal, 12)
+                .padding(.vertical, 4)
+                .padding(.horizontal, 8)
+            }
+            .overlay(alignment: .bottomTrailing) {
+                if !isAtBottom {
+                    Button {
+                        scrollToLatest(using: proxy)
+                    } label: {
+                        Image(systemName: "chevron.down")
+                            .font(.subheadline.weight(.semibold))
+                            .padding(10)
+                            .background(.regularMaterial)
+                            .clipShape(Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .padding(12)
+                    .accessibilityLabel("Scroll to latest message")
+                }
             }
             .background(settings.trueDarkTheme ? Color.black : Color(uiColor: .secondarySystemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))

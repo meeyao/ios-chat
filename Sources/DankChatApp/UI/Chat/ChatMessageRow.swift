@@ -10,6 +10,8 @@ struct ChatMessageRow: View {
     @EnvironmentObject private var identityStore: UserIdentityStore
     @EnvironmentObject private var moderationContext: ModerationContext
     @EnvironmentObject private var highlightStore: HighlightStore
+    @EnvironmentObject private var whisperStore: WhisperStore
+    @EnvironmentObject private var notificationService: ChatNotificationService
     @ObservedObject private var badgeVisibility = BadgeVisibilitySettings.shared
     private static let mentionClassifier = SocialMessageClassifier()
     @State private var showReplyThread = false
@@ -20,8 +22,7 @@ struct ChatMessageRow: View {
 
     private static let timestampFormatter: DateFormatter = {
         let formatter = DateFormatter()
-        formatter.timeStyle = .short
-        formatter.dateStyle = .none
+        formatter.dateFormat = "HH:mm"
         return formatter
     }()
 
@@ -89,6 +90,8 @@ struct ChatMessageRow: View {
                 channelId: message.channel,
                 currentUserId: identityStore.user?.id
             )
+            .environmentObject(whisperStore)
+            .environmentObject(notificationService)
         }
         .sheet(isPresented: $showModerationSheet) {
             if let moderatorId = identityStore.user?.id {
@@ -198,6 +201,11 @@ struct ChatMessageRow: View {
         channel: "dankchat"
     )
 
+    let whisperStore = WhisperStore(
+        whisperService: HelixWhisperService(client: helixClient),
+        eventSubClient: EventSubClient(helixClient: helixClient)
+    )
+
     ChatMessageRow(message: message, settings: settings)
         .environmentObject(HighlightStore())
         .environmentObject(emoteStore)
@@ -205,5 +213,7 @@ struct ChatMessageRow: View {
         .environmentObject(identityStore)
         .environmentObject(userProfileStore)
         .environmentObject(moderationContext)
+        .environmentObject(whisperStore)
+        .environmentObject(ChatNotificationService())
         .padding()
 }

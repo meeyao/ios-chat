@@ -3,6 +3,7 @@ import DankChatCore
 
 /// The top-level settings sheet.
 struct AppSettingsView: View {
+    @EnvironmentObject private var commandStore: CommandStore
     @Environment(\.dismiss) private var dismiss
 
     var body: some View {
@@ -23,6 +24,9 @@ struct AppSettingsView: View {
                     }
                     NavigationLink("Tools & Streams") {
                         ToolsSettingsView()
+                    }
+                    NavigationLink("Commands") {
+                        CommandManagementView(commandStore: commandStore)
                     }
                 }
 
@@ -151,10 +155,31 @@ struct AboutView: View {
 
 struct TwitchLoginSettingsView: View {
     @AppStorage("twitch.clientId") private var savedClientId = ""
+    @EnvironmentObject private var authManager: AuthManager
     @State private var draft = ""
 
     var body: some View {
         Form {
+            Section("Account") {
+                switch authManager.state {
+                case .signedIn(let token):
+                    Text("Signed in (\(token.scope.count) scopes)")
+                        .foregroundStyle(.secondary)
+                    Button("Sign Out", role: .destructive) {
+                        authManager.signOut()
+                    }
+                case .signingIn:
+                    Text("Waiting for Twitch authorization...")
+                        .foregroundStyle(.secondary)
+                case .signedOut:
+                    Text("Signed out")
+                        .foregroundStyle(.secondary)
+                case .error(let message):
+                    Text(message)
+                        .foregroundStyle(.red)
+                }
+            }
+
             Section {
                 TextField("Twitch Client ID", text: $draft)
                     .textInputAutocapitalization(.never)
@@ -185,7 +210,7 @@ struct TwitchLoginSettingsView: View {
 struct DeviceLoginView: View {
     let prompt: AuthManager.DeviceLoginPrompt
     let onCancel: () -> Void
-    @Environment(\.openURL) private var openURL
+    @State private var showActivationPage = false
 
     var body: some View {
         NavigationStack {
@@ -193,7 +218,7 @@ struct DeviceLoginView: View {
                 Text("Log in to Twitch")
                     .font(.title2.weight(.bold))
 
-                Text("Open Twitch and enter this code:")
+                Text("Enter this code on Twitch:")
                     .font(.subheadline)
                     .foregroundStyle(.secondary)
 
@@ -202,13 +227,18 @@ struct DeviceLoginView: View {
                     .textSelection(.enabled)
 
                 Button {
-                    openURL(prompt.verificationURI)
+                    showActivationPage = true
                 } label: {
                     Label("Open twitch.tv/activate", systemImage: "safari")
                 }
                 .buttonStyle(.borderedProminent)
 
                 ProgressView("Waiting for authorization...")
+
+                Text("Keep this app open while you authorize. It signs in automatically.")
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .multilineTextAlignment(.center)
 
                 Button("Cancel", role: .cancel) {
                     onCancel()
@@ -218,11 +248,28 @@ struct DeviceLoginView: View {
             .navigationBarTitleDisplayMode(.inline)
         }
         .presentationDetents([.medium])
+        .interactiveDismissDisabled()
+        .sheet(isPresented: $showActivationPage) {
+            SafariView(url: prompt.verificationURI)
+                .ignoresSafeArea()
+        }
     }
 }
 
 struct ChangelogView: View {
     private let entries: [(version: String, notes: [String])] = [
+        ("0.2.2", [
+            "Full OAuth scopes for profile, moderation, and whispers",
+            "All channels now update unread counts and notifications",
+            "Chat events routed on the main actor",
+            "Compact DankChat-style composer"
+        ]),
+        ("0.2.1", [
+            "Fixed appearance crash (missing environment object)",
+            "Device login survives the Twitch activation hand-off",
+            "IRC authenticates only after the WebSocket opens",
+            "Chat-first layout on iPhone with jump-to-bottom"
+        ]),
         ("0.2.0", [
             "Twitch device-code login and in-app Client ID",
             "Fixed phone layout so chat scrolls",

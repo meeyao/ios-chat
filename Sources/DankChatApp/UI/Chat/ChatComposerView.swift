@@ -17,7 +17,6 @@ struct ChatComposerView: View {
     @State private var messageText = ""
     @State private var selection = NSRange(location: 0, length: 0)
     @State private var isShowingEmoteMenu = false
-    @State private var isShowingCommandManagement = false
     @State private var commandSuggestions: [CommandSuggestion] = []
     @State private var commandSuggestionTask: Task<Void, Never>?
     @State private var selectedPhoto: PhotosPickerItem?
@@ -58,26 +57,18 @@ struct ChatComposerView: View {
                     Image(systemName: "face.smiling")
                         .font(.title3)
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.plain)
 
                 PhotosPicker(selection: $selectedPhoto, matching: .images) {
                     if isUploading {
                         ProgressView()
                     } else {
                         Image(systemName: "paperclip")
-                            .font(.title3)
+                            .font(.body)
                     }
                 }
-                .buttonStyle(.bordered)
+                .buttonStyle(.plain)
                 .disabled(isUploading)
-
-                Button {
-                    isShowingCommandManagement = true
-                } label: {
-                    Image(systemName: "gearshape")
-                        .font(.title3)
-                }
-                .buttonStyle(.bordered)
 
                 ComposerTextView(text: $messageText, selection: $selection) {
                     sendMessage()
@@ -110,9 +101,6 @@ struct ChatComposerView: View {
             .environmentObject(emoteStore)
             .presentationDetents([.medium, .large])
             .presentationDragIndicator(.visible)
-        }
-        .sheet(isPresented: $isShowingCommandManagement) {
-            CommandManagementView(commandStore: commandStore)
         }
         .onChange(of: messageText) { newValue in
             scheduleCommandSuggestions(for: newValue)

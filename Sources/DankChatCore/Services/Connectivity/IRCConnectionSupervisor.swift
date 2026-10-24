@@ -96,7 +96,6 @@ public final class IRCConnectionSupervisor: @unchecked Sendable {
             statusStore.record("Connecting to IRC")
         }
         client.connect(to: configuration.endpoint)
-        Task { await authenticateAndJoin(configuration: configuration) }
     }
 
     private func authenticateAndJoin(configuration: IRCConfiguration) async {
@@ -128,6 +127,9 @@ public final class IRCConnectionSupervisor: @unchecked Sendable {
                 statusStore.record("IRC connected")
             }
             reconnectAttempt = 0
+            if let configuration {
+                Task { await authenticateAndJoin(configuration: configuration) }
+            }
         case .disconnected(let error):
             Task { @MainActor in
                 statusStore.update(state: .disconnected(reason: error?.localizedDescription))
