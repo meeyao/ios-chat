@@ -1,6 +1,7 @@
 import UIKit
 import DankChatCore
 
+@MainActor
 struct ChatRichTextBuilder {
     struct Configuration {
         let font: UIFont

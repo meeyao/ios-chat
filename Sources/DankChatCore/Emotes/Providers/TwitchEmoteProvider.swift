@@ -1,6 +1,6 @@
 import Foundation
 
-public final class TwitchEmoteProvider {
+public final class TwitchEmoteProvider: @unchecked Sendable {
     private let configuration: OAuthConfiguration
     private let tokenProvider: () async -> String?
     private let urlSession: URLSession

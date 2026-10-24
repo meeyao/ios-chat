@@ -287,19 +287,29 @@ private struct ComposerTextView: UIViewRepresentable {
 #Preview {
     let settings = ChatSettings()
     let store = ChatStore(settings: settings)
+    let channelStore = ChannelStore(settings: settings)
     let supervisor = IRCConnectionSupervisor()
-    let session = ChatSession(supervisor: supervisor, store: store, settings: settings)
-    let connectionStore = supervisor.statusStore()
+    let session = ChatSession(supervisor: supervisor, channelStore: channelStore)
+    let connectionStore = supervisor.statusStore
     let identityStore = UserIdentityStore(
         usersService: HelixUsersService(
             client: HelixAPIClient(clientId: "preview", tokenProvider: { nil })
         )
     )
     let commandStore = CommandStore()
+    let emoteStore = EmoteStore(
+        twitchProvider: TwitchEmoteProvider(
+            configuration: OAuthConfiguration(clientId: "", redirectURI: "", scopes: []),
+            tokenProvider: { nil }
+        ),
+        bttvProvider: BTTVEmoteProvider(),
+        ffzProvider: FFZEmoteProvider(),
+        sevenTVProvider: SevenTVEmoteProvider()
+    )
 
-    return ChatComposerView(connectionStore: connectionStore, session: session, channel: "dankchat")
+    ChatComposerView(connectionStore: connectionStore, session: session, channel: "dankchat")
         .padding()
         .environmentObject(identityStore)
         .environmentObject(commandStore)
-        .environmentObject(store.emoteStore)
+        .environmentObject(emoteStore)
 }

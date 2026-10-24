@@ -1,6 +1,6 @@
 import Foundation
 
-public final class SevenTVEmoteProvider {
+public final class SevenTVEmoteProvider: @unchecked Sendable {
     private let urlSession: URLSession
 
     public init(urlSession: URLSession = .shared) {
@@ -36,8 +36,8 @@ public final class SevenTVEmoteProvider {
         let baseURL = normalizedHostURL(host.url)
         let webpFiles = host.files.filter { $0.format.uppercased() == "WEBP" }
         let preferredFiles = webpFiles.isEmpty ? host.files : webpFiles
-        let urlByScale = Dictionary(
-            uniqueKeysWithValues: preferredFiles.compactMap { file in
+        let urlByScale: [String: URL] = Dictionary(
+            uniqueKeysWithValues: preferredFiles.compactMap { file -> (String, URL)? in
                 guard let url = URL(string: "\(baseURL)/\(file.name)") else { return nil }
                 return (file.scale, url)
             }

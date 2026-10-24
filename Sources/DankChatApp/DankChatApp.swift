@@ -86,7 +86,7 @@ private struct ContentView: View {
         let channelStore = ChannelStore(settings: settings)
         _chatSettings = StateObject(wrappedValue: settings)
         _channelStore = StateObject(wrappedValue: channelStore)
-        _connectionStore = StateObject(wrappedValue: connectionSupervisor.statusStore())
+        _connectionStore = StateObject(wrappedValue: connectionSupervisor.statusStore)
 
         let providerStatusStore = ProviderStatusStore()
         let tokenProvider: () async -> String? = { [weak authManager] in

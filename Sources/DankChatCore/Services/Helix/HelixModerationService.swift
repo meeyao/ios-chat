@@ -5,7 +5,7 @@ import Foundation
 /// All methods require the `moderator:manage:banned_users` OAuth scope.
 /// The `moderatorId` must match the authenticated user and have moderator (or broadcaster)
 /// privileges in the target channel.
-public final class HelixModerationService {
+public final class HelixModerationService: @unchecked Sendable {
     private let client: HelixAPIClient
 
     /// Creates a new moderation service.

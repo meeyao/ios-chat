@@ -6,7 +6,7 @@ import Foundation
 /// Requires the `moderator:manage:chat_messages` OAuth scope.
 /// The `moderatorId` must match the authenticated user and have moderator (or broadcaster)
 /// privileges in the target channel.
-public final class HelixChatMessagesService {
+public final class HelixChatMessagesService: @unchecked Sendable {
     private let client: HelixAPIClient
 
     /// Creates a new chat messages moderation service.

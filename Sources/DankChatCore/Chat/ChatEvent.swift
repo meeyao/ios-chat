@@ -46,7 +46,7 @@ public struct SystemMessage: Equatable, Sendable {
     }
 }
 
-public enum SystemMessageKind: String, Equatable {
+public enum SystemMessageKind: String, Equatable, Sendable {
     case notice
     case userNotice
     case roomState

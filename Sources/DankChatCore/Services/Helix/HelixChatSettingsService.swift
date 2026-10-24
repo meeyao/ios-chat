@@ -5,7 +5,7 @@ import Foundation
 /// Use this service to read and update chat room modes (slow, followers-only, subs-only,
 /// emote-only, unique chat). Reading settings requires the `moderator:read:chat_settings`
 /// scope; updating requires `moderator:manage:chat_settings`.
-public final class HelixChatSettingsService {
+public final class HelixChatSettingsService: @unchecked Sendable {
     private let client: HelixAPIClient
 
     /// Creates a new chat settings service.

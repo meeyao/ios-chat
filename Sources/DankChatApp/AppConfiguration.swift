@@ -16,6 +16,16 @@ struct AppConfiguration: Sendable {
             && !defaultUser.isEmpty
     }
 
+    /// SwiftPM's Bundle.module only exists inside SwiftPM targets; the Xcode app
+    /// target keeps its resources in the main bundle.
+    private static var resourceBundle: Bundle {
+        #if SWIFT_PACKAGE
+        .module
+        #else
+        .main
+        #endif
+    }
+
     static func load() -> AppConfiguration {
         let defaults = AppConfiguration(
             oauthConfiguration: OAuthConfiguration(
@@ -30,7 +40,8 @@ struct AppConfiguration: Sendable {
             keychainAccount: "twitch"
         )
 
-        guard let url = Bundle.module.url(forResource: "Config", withExtension: "plist"),
+        guard let url = resourceBundle.url(forResource: "Config", withExtension: "plist")
+                ?? resourceBundle.url(forResource: "Config", withExtension: "plist", subdirectory: "Resources"),
               let data = try? Data(contentsOf: url),
               let plist = try? PropertyListSerialization.propertyList(from: data, format: nil) as? [String: Any]
         else {

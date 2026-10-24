@@ -1,0 +1,15 @@
+{
+  "project": "DankChat",
+  "platform": "ios",
+  "github": {
+    "owner": "meeyao",
+    "repo": "ios-chat"
+  },
+  "provider": "github",
+  "ios": {
+    "path": ".",
+    "scheme": "DankChat",
+    "bundleId": "com.meeyao.dankchat",
+    "configuration": "Debug"
+  }
+}
