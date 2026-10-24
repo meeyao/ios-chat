@@ -11,9 +11,6 @@ struct AppConfiguration: Sendable {
 
     var isConfigured: Bool {
         !oauthConfiguration.clientId.isEmpty
-            && !oauthConfiguration.redirectURI.isEmpty
-            && !defaultNick.isEmpty
-            && !defaultUser.isEmpty
     }
 
     /// SwiftPM's Bundle.module only exists inside SwiftPM targets; the Xcode app
@@ -48,7 +45,10 @@ struct AppConfiguration: Sendable {
             return defaults
         }
 
-        let clientId = plist["ClientId"] as? String ?? defaults.oauthConfiguration.clientId
+        let storedClientId = UserDefaults.standard.string(forKey: "twitch.clientId")?
+            .trimmingCharacters(in: .whitespacesAndNewlines)
+        let plistClientId = plist["ClientId"] as? String ?? defaults.oauthConfiguration.clientId
+        let clientId = (storedClientId?.isEmpty == false ? storedClientId : nil) ?? plistClientId
         let redirectURI = plist["RedirectURI"] as? String ?? defaults.oauthConfiguration.redirectURI
         let scopes = plist["Scopes"] as? [String] ?? defaults.oauthConfiguration.scopes
         let defaultNick = plist["DefaultNick"] as? String ?? defaults.defaultNick

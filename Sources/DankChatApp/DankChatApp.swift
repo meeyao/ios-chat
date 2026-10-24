@@ -216,6 +216,18 @@ private struct ContentView: View {
         .sheet(isPresented: $showSettings) {
             AppSettingsView()
         }
+        .sheet(item: Binding(
+            get: { authManager.devicePrompt },
+            set: { prompt in
+                if prompt == nil {
+                    authManager.cancelLogin()
+                }
+            }
+        )) { prompt in
+            DeviceLoginView(prompt: prompt) {
+                authManager.cancelLogin()
+            }
+        }
         .sheet(isPresented: $showManagement) {
             ChannelManagementView(
                 store: channelStore,
@@ -305,22 +317,21 @@ private struct ContentView: View {
         case .signingIn:
             return "Signing in..."
         case .signedIn(let token):
-            return "Signed in (token: \(tokenPreview(token.accessToken)))"
+            if let user = identityStore.user {
+                return "Signed in as \(user.displayName)"
+            }
+            return "Signed in (\(token.scope.count) scopes)"
         case .error(let message):
             return "Auth error: \(message)"
         }
     }
 
-    private func tokenPreview(_ token: String) -> String {
-        let prefix = token.prefix(6)
-        return "\(prefix)..."
-    }
-
     private func connectIRC() {
         guard case let .signedIn(token) = authManager.state else { return }
+        let login = identityStore.user?.login ?? configuration.defaultNick
         let ircConfig = IRCConfiguration(
-            nickname: configuration.defaultNick,
-            user: configuration.defaultUser,
+            nickname: login,
+            user: login,
             oauthToken: token.accessToken
         )
         lastIRCConfiguration = ircConfig
@@ -418,7 +429,7 @@ private struct ContentView: View {
                 .bold()
 
             if !configuration.isConfigured {
-                Text("Update Config.plist with Twitch client info.")
+                Text("Add your Twitch Client ID in Settings → Twitch Login, then restart the app.")
                     .font(.footnote)
                     .foregroundStyle(.secondary)
             }
@@ -431,7 +442,7 @@ private struct ContentView: View {
 
                 HStack {
                     Button("Sign In") {
-                        Task { await authManager.beginLogin() }
+                        authManager.beginLogin()
                     }
                     .buttonStyle(.bordered)
                     .disabled(!configuration.isConfigured || isSigningIn)
@@ -449,7 +460,7 @@ private struct ContentView: View {
                     connectIRC()
                 }
                 .buttonStyle(.borderedProminent)
-                .disabled(!isSignedIn || !configuration.isConfigured)
+                .disabled(!isSignedIn)
 
                 Button("Disconnect") {
                     connectionSupervisor.disconnect(reason: "User requested")

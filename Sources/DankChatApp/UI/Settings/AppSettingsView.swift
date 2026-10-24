@@ -8,6 +8,12 @@ struct AppSettingsView: View {
     var body: some View {
         NavigationStack {
             List {
+                Section("Twitch") {
+                    NavigationLink("Twitch Login") {
+                        TwitchLoginSettingsView()
+                    }
+                }
+
                 Section("Chat") {
                     NavigationLink("Appearance") {
                         AppearanceSettingsView()
@@ -140,6 +146,78 @@ struct AboutView: View {
         }
         .navigationTitle("About")
         .navigationBarTitleDisplayMode(.inline)
+    }
+}
+
+struct TwitchLoginSettingsView: View {
+    @AppStorage("twitch.clientId") private var savedClientId = ""
+    @State private var draft = ""
+
+    var body: some View {
+        Form {
+            Section {
+                TextField("Twitch Client ID", text: $draft)
+                    .textInputAutocapitalization(.never)
+                    .autocorrectionDisabled()
+                Button("Save Client ID") {
+                    savedClientId = draft.trimmingCharacters(in: .whitespacesAndNewlines)
+                }
+                .disabled(draft.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+
+                if !savedClientId.isEmpty {
+                    Button("Clear Client ID", role: .destructive) {
+                        savedClientId = ""
+                        draft = ""
+                    }
+                }
+            } footer: {
+                Text("Create an app at dev.twitch.tv/console/apps, copy its Client ID, and paste it here. No client secret or redirect URL is needed. Restart the app after saving, then tap Sign In and enter the code at twitch.tv/activate.")
+            }
+        }
+        .navigationTitle("Twitch Login")
+        .navigationBarTitleDisplayMode(.inline)
+        .onAppear {
+            draft = savedClientId
+        }
+    }
+}
+
+struct DeviceLoginView: View {
+    let prompt: AuthManager.DeviceLoginPrompt
+    let onCancel: () -> Void
+    @Environment(\.openURL) private var openURL
+
+    var body: some View {
+        NavigationStack {
+            VStack(spacing: 16) {
+                Text("Log in to Twitch")
+                    .font(.title2.weight(.bold))
+
+                Text("Open Twitch and enter this code:")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
+
+                Text(prompt.userCode)
+                    .font(.system(size: 40, weight: .bold, design: .monospaced))
+                    .textSelection(.enabled)
+
+                Button {
+                    openURL(prompt.verificationURI)
+                } label: {
+                    Label("Open twitch.tv/activate", systemImage: "safari")
+                }
+                .buttonStyle(.borderedProminent)
+
+                ProgressView("Waiting for authorization...")
+
+                Button("Cancel", role: .cancel) {
+                    onCancel()
+                }
+            }
+            .padding()
+            .navigationBarTitleDisplayMode(.inline)
+        }
+        .presentationDetents([.medium])
     }
 }
 
