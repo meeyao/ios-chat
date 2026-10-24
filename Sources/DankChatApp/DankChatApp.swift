@@ -69,11 +69,16 @@ private struct ContentView: View {
     @StateObject private var highlightStore: HighlightStore
     @StateObject private var ignoreStore: IgnoreStore
     @StateObject private var notificationService: ChatNotificationService
+    @StateObject private var toolsStore: ToolsStore
+    @StateObject private var recentUploadsStore: RecentUploadsStore
+    @StateObject private var streamStore: StreamStore
+    @StateObject private var ttsService: TextToSpeechService
     private let usersService: HelixUsersService
     @State private var chatSession: ChatSession?
     @State private var didStartMonitoring = false
     @State private var showManagement = false
     @State private var showNotificationSettings = false
+    @State private var showToolsSettings = false
     @State private var columnVisibility = NavigationSplitViewVisibility.all
     @SceneStorage("activeChannelId") private var storedActiveChannelId: String?
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -91,12 +96,18 @@ private struct ContentView: View {
         let highlightStore = HighlightStore()
         let ignoreStore = IgnoreStore()
         let notificationService = ChatNotificationService()
+        let toolsStore = ToolsStore()
+        let recentUploadsStore = RecentUploadsStore()
+        let ttsService = TextToSpeechService()
         _chatSettings = StateObject(wrappedValue: settings)
         _channelStore = StateObject(wrappedValue: channelStore)
         _connectionStore = StateObject(wrappedValue: connectionSupervisor.statusStore)
         _highlightStore = StateObject(wrappedValue: highlightStore)
         _ignoreStore = StateObject(wrappedValue: ignoreStore)
         _notificationService = StateObject(wrappedValue: notificationService)
+        _toolsStore = StateObject(wrappedValue: toolsStore)
+        _recentUploadsStore = StateObject(wrappedValue: recentUploadsStore)
+        _ttsService = StateObject(wrappedValue: ttsService)
 
         let providerStatusStore = ProviderStatusStore()
         let tokenProvider: () async -> String? = { [weak authManager] in
@@ -132,6 +143,8 @@ private struct ContentView: View {
         let usersService = HelixUsersService(client: helixClient)
         self.usersService = usersService
         let identityStore = UserIdentityStore(usersService: usersService)
+        let streamStore = StreamStore(service: HelixStreamsService(client: helixClient))
+        _streamStore = StateObject(wrappedValue: streamStore)
 
         let socialTabStore = SocialTabStore(settings: settings)
 
@@ -195,8 +208,17 @@ private struct ContentView: View {
         .environmentObject(highlightStore)
         .environmentObject(ignoreStore)
         .environmentObject(notificationService)
+        .environmentObject(toolsStore)
+        .environmentObject(recentUploadsStore)
+        .environmentObject(streamStore)
+        .environmentObject(ttsService)
         .sheet(isPresented: $showNotificationSettings) {
             NotificationsSettingsView()
+        }
+        .sheet(isPresented: $showToolsSettings) {
+            NavigationStack {
+                ToolsSettingsView()
+            }
         }
         .sheet(isPresented: $showManagement) {
             ChannelManagementView(
@@ -209,6 +231,7 @@ private struct ContentView: View {
             if !didStartMonitoring {
                 didStartMonitoring = true
                 connectionSupervisor.startMonitoring()
+                streamStore.updateChannels(channelStore.channels.map(\.id))
                 await notificationService.requestAuthorization()
                 authManager.restoreSession()
                 await authManager.refreshIfNeeded()
@@ -225,6 +248,8 @@ private struct ContentView: View {
                 identityStore.clear()
                 whisperStore.stop()
                 whisperStore.clearAll()
+                streamStore.stop()
+                ttsService.stop()
             case .signingIn:
                 break
             }
@@ -241,6 +266,7 @@ private struct ContentView: View {
             syncActiveChannel()
             syncConnectionStates()
             refreshProviders()
+            streamStore.updateChannels(channelStore.channels.map(\.id))
         }
         .onChange(of: channelStore.activeChannelId) { _, newValue in
             storedActiveChannelId = newValue
@@ -426,12 +452,21 @@ private struct ContentView: View {
 
             ChatSettingsView(settings: chatSettings, roomStateContext: roomStateContext)
 
-            Button {
-                showNotificationSettings = true
-            } label: {
-                Label("Notifications & Highlights", systemImage: "bell.badge")
+            HStack {
+                Button {
+                    showNotificationSettings = true
+                } label: {
+                    Label("Alerts", systemImage: "bell.badge")
+                }
+                .buttonStyle(.bordered)
+
+                Button {
+                    showToolsSettings = true
+                } label: {
+                    Label("Tools", systemImage: "wrench.and.screwdriver")
+                }
+                .buttonStyle(.bordered)
             }
-            .buttonStyle(.bordered)
         }
     }
 
@@ -455,6 +490,8 @@ private struct ContentView: View {
         return VStack(spacing: 12) {
             ProviderOutageBannerView()
                 .padding(.horizontal, 4)
+
+            StreamPanelView(channel: channel.id)
 
             Picker("View", selection: $selectedDetailTab) {
                 ForEach(DetailTab.allCases) { tab in
@@ -640,6 +677,10 @@ private struct ContentView: View {
             notificationService.notifyMention(message: message, channel: channelId)
         } else if let highlight, highlight.createNotification {
             notificationService.notifyHighlight(message: message, channel: channelId)
+        }
+
+        if channelId == channelStore.activeChannelId {
+            ttsService.speak(message, settings: toolsStore.settings)
         }
     }
 

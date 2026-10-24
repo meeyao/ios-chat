@@ -1,5 +1,6 @@
 import SwiftUI
 import UIKit
+import PhotosUI
 import DankChatCore
 
 struct ChatComposerView: View {
@@ -10,6 +11,8 @@ struct ChatComposerView: View {
     @EnvironmentObject private var emoteStore: EmoteStore
     @EnvironmentObject private var identityStore: UserIdentityStore
     @EnvironmentObject private var commandStore: CommandStore
+    @EnvironmentObject private var toolsStore: ToolsStore
+    @EnvironmentObject private var recentUploadsStore: RecentUploadsStore
 
     @State private var messageText = ""
     @State private var selection = NSRange(location: 0, length: 0)
@@ -17,8 +20,13 @@ struct ChatComposerView: View {
     @State private var isShowingCommandManagement = false
     @State private var commandSuggestions: [CommandSuggestion] = []
     @State private var commandSuggestionTask: Task<Void, Never>?
+    @State private var selectedPhoto: PhotosPickerItem?
+    @State private var isUploading = false
+    @State private var uploadError: String?
     @StateObject private var recentsStore = EmoteRecentsStore()
     @StateObject private var menuSettings = EmoteMenuSettings()
+
+    private let imageUploader = ImageUploader()
 
     private let suggestionEngine = EmoteSuggestionEngine()
     private let commandResolver = CommandResolver()
@@ -36,6 +44,13 @@ struct ChatComposerView: View {
                 }
             }
 
+            if let uploadError {
+                Text(uploadError)
+                    .font(.caption)
+                    .foregroundStyle(.red)
+                    .frame(maxWidth: .infinity, alignment: .leading)
+            }
+
             HStack(spacing: 12) {
                 Button {
                     isShowingEmoteMenu = true
@@ -44,6 +59,17 @@ struct ChatComposerView: View {
                         .font(.title3)
                 }
                 .buttonStyle(.bordered)
+
+                PhotosPicker(selection: $selectedPhoto, matching: .images) {
+                    if isUploading {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "paperclip")
+                            .font(.title3)
+                    }
+                }
+                .buttonStyle(.bordered)
+                .disabled(isUploading)
 
                 Button {
                     isShowingCommandManagement = true
@@ -93,6 +119,10 @@ struct ChatComposerView: View {
         }
         .onChange(of: identityStore.user?.login ?? "") { _, _ in
             scheduleCommandSuggestions(for: messageText)
+        }
+        .onChange(of: selectedPhoto) { _, item in
+            guard let item else { return }
+            Task { await uploadPhoto(item) }
         }
     }
 
@@ -186,6 +216,48 @@ struct ChatComposerView: View {
         }
         messageText = updated.text
         selection = NSRange(location: updated.cursor, length: 0)
+    }
+
+    @MainActor
+    private func uploadPhoto(_ item: PhotosPickerItem) async {
+        isUploading = true
+        uploadError = nil
+        defer {
+            isUploading = false
+            selectedPhoto = nil
+        }
+
+        do {
+            guard let data = try await item.loadTransferable(type: Data.self),
+                  let image = UIImage(data: data),
+                  let jpeg = strippedJPEG(from: image)
+            else {
+                throw ImageUploadError.invalidResponse
+            }
+            let uploaded = try await imageUploader.upload(
+                data: jpeg,
+                filename: "upload.jpg",
+                mimeType: "image/jpeg",
+                config: toolsStore.settings.uploaderConfig,
+                channel: channel
+            )
+            recentUploadsStore.add(uploaded)
+            insertText(uploaded.imageURL + " ")
+        } catch {
+            uploadError = error.localizedDescription
+        }
+    }
+
+    /// Redraws the image so EXIF/GPS metadata is not uploaded with it.
+    private func strippedJPEG(from image: UIImage) -> Data? {
+        let format = UIGraphicsImageRendererFormat()
+        format.scale = image.scale
+        format.opaque = true
+        let renderer = UIGraphicsImageRenderer(size: image.size, format: format)
+        let redrawn = renderer.image { _ in
+            image.draw(in: CGRect(origin: .zero, size: image.size))
+        }
+        return redrawn.jpegData(compressionQuality: 0.9)
     }
 
     private func applyCommandSuggestion(_ suggestion: CommandSuggestion) {
@@ -312,4 +384,6 @@ private struct ComposerTextView: UIViewRepresentable {
         .environmentObject(identityStore)
         .environmentObject(commandStore)
         .environmentObject(emoteStore)
+        .environmentObject(ToolsStore())
+        .environmentObject(RecentUploadsStore())
 }
