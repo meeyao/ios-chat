@@ -135,11 +135,12 @@ public final class StreamStore: ObservableObject {
     @Published public var settings: StreamSettings {
         didSet {
             saveSettings()
-            if !settings.fetchStreams {
-                refreshTask?.cancel()
-                streams = [:]
+            if settings.fetchStreams {
+                startPolling()
             } else {
-                updateChannels(watchedLogins)
+                refreshTask?.cancel()
+                refreshTask = nil
+                streams = [:]
             }
         }
     }
@@ -163,19 +164,14 @@ public final class StreamStore: ObservableObject {
 
     public func updateChannels(_ logins: [String]) {
         let normalized = Array(Set(logins.map { $0.lowercased() })).sorted()
-        guard normalized != watchedLogins else { return }
-        watchedLogins = normalized
-        refreshTask?.cancel()
-        guard settings.fetchStreams, !normalized.isEmpty else {
-            streams = [:]
+        if normalized == watchedLogins {
+            if settings.fetchStreams, refreshTask == nil {
+                startPolling()
+            }
             return
         }
-        refreshTask = Task { [weak self] in
-            while !Task.isCancelled {
-                await self?.refresh()
-                try? await Task.sleep(nanoseconds: 60_000_000_000)
-            }
-        }
+        watchedLogins = normalized
+        startPolling()
     }
 
     public func refresh() async {
@@ -196,6 +192,21 @@ public final class StreamStore: ObservableObject {
         refreshTask?.cancel()
         refreshTask = nil
         streams = [:]
+    }
+
+    private func startPolling() {
+        refreshTask?.cancel()
+        refreshTask = nil
+        guard settings.fetchStreams, !watchedLogins.isEmpty else {
+            streams = [:]
+            return
+        }
+        refreshTask = Task { [weak self] in
+            while !Task.isCancelled {
+                await self?.refresh()
+                try? await Task.sleep(nanoseconds: 60_000_000_000)
+            }
+        }
     }
 
     private func saveSettings() {

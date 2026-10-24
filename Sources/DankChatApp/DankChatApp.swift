@@ -241,6 +241,7 @@ private struct ContentView: View {
             switch newState {
             case .signedIn:
                 Task { await identityStore.refresh() }
+                streamStore.updateChannels(channelStore.channels.map(\.id))
             case .signedOut, .error:
                 identityStore.clear()
                 whisperStore.stop()
