@@ -10,7 +10,6 @@ struct ChannelTabStripView: View {
     let onRemove: (Channel) -> Void
     let onTogglePin: (Channel) -> Void
     let onReconnect: (Channel) -> Void
-    let onManage: () -> Void
 
     @State private var renameTarget: Channel?
     @State private var renameText = ""
@@ -19,62 +18,55 @@ struct ChannelTabStripView: View {
     @State private var showRemovePrompt = false
 
     var body: some View {
-        HStack(spacing: 12) {
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 8) {
-                    ForEach(store.channels) { channel in
-                        Button {
-                            selection = channel.id
-                            store.setActive(id: channel.id)
-                        } label: {
-                            let state = store.state(for: channel.id) ?? ChannelState()
-                            HStack(spacing: 6) {
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 16) {
+                ForEach(store.channels) { channel in
+                    Button {
+                        selection = channel.id
+                        store.setActive(id: channel.id)
+                    } label: {
+                        let state = store.state(for: channel.id) ?? ChannelState()
+                        VStack(spacing: 4) {
+                            HStack(spacing: 5) {
                                 Text(channel.displayName)
-                                    .font(.subheadline)
+                                    .font(.subheadline.weight(isActive(channel) ? .semibold : .regular))
                                     .lineLimit(1)
                                 if state.mentionCount > 0 {
                                     MentionBadge(count: state.mentionCount)
-                                }
-                                if state.unreadCount > 0 {
+                                } else if state.unreadCount > 0 {
                                     UnreadDot()
                                 }
-                                ChannelStatusIndicator(state: connectionState(channel))
                             }
-                            .padding(.horizontal, 12)
-                            .padding(.vertical, 6)
-                            .background(background(for: channel))
-                            .foregroundStyle(foreground(for: channel))
-                            .clipShape(Capsule())
+                            .foregroundStyle(isActive(channel) ? Color.primary : Color.secondary)
+
+                            Rectangle()
+                                .fill(isActive(channel) ? Color.accentColor : Color.clear)
+                                .frame(height: 2)
+                                .clipShape(Capsule())
                         }
-                        .buttonStyle(.plain)
-                        .contextMenu {
-                            Button(channel.isPinned ? "Unpin" : "Pin") {
-                                onTogglePin(channel)
-                            }
-                            Button("Rename") {
-                                renameTarget = channel
-                                renameText = channel.displayName
-                                showRenamePrompt = true
-                            }
-                            Button("Remove", role: .destructive) {
-                                requestRemove(channel)
-                            }
-                            Button("Reconnect now") {
-                                onReconnect(channel)
-                            }
+                        .padding(.vertical, 4)
+                        .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .contextMenu {
+                        Button(channel.isPinned ? "Unpin" : "Pin") {
+                            onTogglePin(channel)
+                        }
+                        Button("Rename") {
+                            renameTarget = channel
+                            renameText = channel.displayName
+                            showRenamePrompt = true
+                        }
+                        Button("Remove", role: .destructive) {
+                            requestRemove(channel)
+                        }
+                        Button("Reconnect now") {
+                            onReconnect(channel)
                         }
                     }
                 }
-                .padding(.vertical, 4)
             }
-
-            Button {
-                onManage()
-            } label: {
-                Image(systemName: "slider.horizontal.3")
-                    .font(.subheadline)
-            }
-            .buttonStyle(.bordered)
+            .padding(.horizontal, 2)
         }
         .alert("Rename Channel", isPresented: $showRenamePrompt) {
             TextField("Channel name", text: $renameText)
@@ -105,14 +97,8 @@ struct ChannelTabStripView: View {
         }
     }
 
-    private func background(for channel: Channel) -> Color {
-        let isActive = channel.id == selection || channel.id == store.activeChannelId
-        return isActive ? Color.accentColor.opacity(0.2) : Color(uiColor: .secondarySystemBackground)
-    }
-
-    private func foreground(for channel: Channel) -> Color {
-        let isActive = channel.id == selection || channel.id == store.activeChannelId
-        return isActive ? .primary : .secondary
+    private func isActive(_ channel: Channel) -> Bool {
+        channel.id == selection || channel.id == store.activeChannelId
     }
 }
 
@@ -154,8 +140,7 @@ private struct MentionBadge: View {
         onRename: { _, _ in },
         onRemove: { _ in },
         onTogglePin: { _ in },
-        onReconnect: { _ in },
-        onManage: {}
+        onReconnect: { _ in }
     )
     .padding()
 }

@@ -70,24 +70,40 @@ struct ChatComposerView: View {
                 .buttonStyle(.plain)
                 .disabled(isUploading)
 
-                ComposerTextView(text: $messageText, selection: $selection) {
-                    sendMessage()
-                }
-                .frame(minHeight: 36, maxHeight: 96)
-                .background(
-                    RoundedRectangle(cornerRadius: 8)
-                        .fill(Color(.secondarySystemBackground))
-                )
-                .overlay(
-                    RoundedRectangle(cornerRadius: 8)
-                        .stroke(Color(.separator))
-                )
+                ZStack(alignment: .topLeading) {
+                    ComposerTextView(text: $messageText, selection: $selection) {
+                        sendMessage()
+                    }
+                    .frame(minHeight: 36, maxHeight: 96)
+                    .background(
+                        RoundedRectangle(cornerRadius: 18)
+                            .fill(Color(.secondarySystemBackground))
+                    )
+                    .overlay(
+                        RoundedRectangle(cornerRadius: 18)
+                            .stroke(Color(.separator))
+                    )
 
-                Button("Send") {
-                    sendMessage()
+                    if trimmedMessage.isEmpty {
+                        Text("Start chatting")
+                            .font(.subheadline)
+                            .foregroundStyle(.secondary)
+                            .padding(.leading, 12)
+                            .padding(.top, 10)
+                            .allowsHitTesting(false)
+                    }
                 }
-                .buttonStyle(.borderedProminent)
+
+                Button {
+                    sendMessage()
+                } label: {
+                    Image(systemName: "paperplane.fill")
+                        .font(.title3)
+                }
+                .buttonStyle(.plain)
+                .foregroundStyle(canSend ? Color.accentColor : Color.secondary)
                 .disabled(!canSend)
+                .accessibilityLabel("Send message")
             }
         }
         .sheet(isPresented: $isShowingEmoteMenu) {

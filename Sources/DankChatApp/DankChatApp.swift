@@ -80,7 +80,6 @@ private struct ContentView: View {
     @State private var didStartMonitoring = false
     @State private var showManagement = false
     @State private var showSettings = false
-    @State private var showChatSettings = false
     @State private var devicePrompt: AuthManager.DeviceLoginPrompt?
     @State private var columnVisibility = NavigationSplitViewVisibility.all
     @SceneStorage("activeChannelId") private var storedActiveChannelId: String?
@@ -233,7 +232,7 @@ private struct ContentView: View {
         .environmentObject(streamStore)
         .environmentObject(ttsService)
         .sheet(isPresented: $showSettings) {
-            AppSettingsView()
+            AppSettingsView(roomStateContext: roomStateContext)
                 .environmentObject(authManager)
                 .environmentObject(chatSettings)
                 .environmentObject(highlightStore)
@@ -243,23 +242,9 @@ private struct ContentView: View {
                 .environmentObject(recentUploadsStore)
                 .environmentObject(streamStore)
                 .environmentObject(commandStore)
-        }
-        .sheet(isPresented: $showChatSettings) {
-            NavigationStack {
-                ScrollView {
-                    ChatSettingsView(settings: chatSettings, roomStateContext: roomStateContext)
-                        .padding()
-                }
-                .navigationTitle("Chat Settings")
-                .navigationBarTitleDisplayMode(.inline)
-                .toolbar {
-                    ToolbarItem(placement: .navigationBarTrailing) {
-                        Button("Done") { showChatSettings = false }
-                    }
-                }
-            }
-            .environmentObject(badgeStore)
-            .environmentObject(moderationContext)
+                .environmentObject(badgeStore)
+                .environmentObject(moderationContext)
+                .environmentObject(connectionStore)
         }
         .sheet(item: $devicePrompt) { prompt in
             DeviceLoginView(prompt: prompt) {
@@ -409,8 +394,7 @@ private struct ContentView: View {
                     onTogglePin: { channel in
                         channelStore.setPinned(id: channel.id, isPinned: !channel.isPinned)
                     },
-                    onReconnect: { _ in reconnectNow() },
-                    onManage: { showManagement = true }
+                    onReconnect: { _ in reconnectNow() }
                 )
 
                 if let channel = activeChannel {
@@ -463,15 +447,24 @@ private struct ContentView: View {
     }
 
     private var topBar: some View {
-        HStack(spacing: 8) {
+        HStack(spacing: 10) {
             Text("DankChat")
-                .font(.headline)
+                .font(.title2.weight(.bold))
 
             if isSignedIn {
-                ConnectionStatusView(store: connectionStore)
+                ConnectionDot(state: connectionStore.state)
             }
 
             Spacer()
+
+            Button {
+                showManagement = true
+            } label: {
+                Image(systemName: "plus")
+                    .font(.body.weight(.semibold))
+            }
+            .buttonStyle(.plain)
+            .accessibilityLabel("Add or manage channels")
 
             Button {
                 showSettings = true
@@ -479,9 +472,10 @@ private struct ContentView: View {
                 Image(systemName: "gearshape")
                     .font(.body)
             }
-            .buttonStyle(.bordered)
+            .buttonStyle(.plain)
             .accessibilityLabel("Settings")
         }
+        .padding(.bottom, 2)
     }
 
     private var signedOutView: some View {
@@ -561,22 +555,12 @@ private struct ContentView: View {
 
             StreamPanelView(channel: channel.id)
 
-            HStack(spacing: 8) {
-                Picker("View", selection: $selectedDetailTab) {
-                    ForEach(DetailTab.allCases) { tab in
-                        Text(tab.rawValue).tag(tab)
-                    }
+            Picker("View", selection: $selectedDetailTab) {
+                ForEach(DetailTab.allCases) { tab in
+                    Text(tab.rawValue).tag(tab)
                 }
-                .pickerStyle(.segmented)
-
-                Button {
-                    showChatSettings = true
-                } label: {
-                    Image(systemName: "slider.horizontal.3")
-                }
-                .buttonStyle(.bordered)
-                .accessibilityLabel("Chat settings")
             }
+            .pickerStyle(.segmented)
             .padding(.horizontal, 4)
 
             Group {
@@ -735,4 +719,39 @@ private struct ContentView: View {
         }
     }
 
+}
+
+private struct ConnectionDot: View {
+    let state: IRCConnectionState
+
+    var body: some View {
+        Circle()
+            .fill(color)
+            .frame(width: 8, height: 8)
+            .accessibilityLabel(label)
+    }
+
+    private var color: Color {
+        switch state {
+        case .connected:
+            return .green
+        case .connecting, .reconnecting:
+            return .orange
+        case .disconnected:
+            return .red
+        }
+    }
+
+    private var label: String {
+        switch state {
+        case .connected:
+            return "IRC connected"
+        case .connecting:
+            return "IRC connecting"
+        case .reconnecting(let attempt):
+            return "IRC reconnecting, attempt \(attempt)"
+        case .disconnected(let reason):
+            return "IRC disconnected\(reason.map { ": \($0)" } ?? "")"
+        }
+    }
 }

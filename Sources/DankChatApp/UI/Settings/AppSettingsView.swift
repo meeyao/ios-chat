@@ -3,8 +3,16 @@ import DankChatCore
 
 /// The top-level settings sheet.
 struct AppSettingsView: View {
+    let roomStateContext: RoomStateContext?
+
     @EnvironmentObject private var commandStore: CommandStore
+    @EnvironmentObject private var chatSettings: ChatSettings
+    @EnvironmentObject private var connectionStore: ConnectionStatusStore
     @Environment(\.dismiss) private var dismiss
+
+    init(roomStateContext: RoomStateContext? = nil) {
+        self.roomStateContext = roomStateContext
+    }
 
     var body: some View {
         NavigationStack {
@@ -16,6 +24,9 @@ struct AppSettingsView: View {
                 }
 
                 Section("Chat") {
+                    NavigationLink("Chat Settings") {
+                        ChatSettingsView(settings: chatSettings, roomStateContext: roomStateContext)
+                    }
                     NavigationLink("Appearance") {
                         AppearanceSettingsView()
                     }
@@ -36,6 +47,9 @@ struct AppSettingsView: View {
                     }
                     NavigationLink("Changelog") {
                         ChangelogView()
+                    }
+                    NavigationLink("Connection Log") {
+                        ConnectionStatusView(store: connectionStore)
                     }
                 }
             }
@@ -258,6 +272,12 @@ struct DeviceLoginView: View {
 
 struct ChangelogView: View {
     private let entries: [(version: String, notes: [String])] = [
+        ("0.2.3", [
+            "Removed the connection log from the main screen",
+            "Android-style channel tabs and compact stream row",
+            "Chat composer placeholder and send icon",
+            "Single settings entry instead of duplicate sliders"
+        ]),
         ("0.2.2", [
             "Full OAuth scopes for profile, moderation, and whispers",
             "All channels now update unread counts and notifications",

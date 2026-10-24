@@ -20,27 +20,24 @@ struct StreamPanelView: View {
 
     var body: some View {
         if let stream, streamStore.settings.showStreamInfo {
-            VStack(spacing: 8) {
-                HStack(alignment: .firstTextBaseline, spacing: 8) {
-                    VStack(alignment: .leading, spacing: 2) {
-                        if let title = stream.title, !title.isEmpty {
-                            Text(title)
-                                .font(.caption.weight(.semibold))
-                                .lineLimit(1)
-                        }
-                        Text(stream.summary(showCategory: streamStore.settings.showStreamCategory))
-                            .font(.caption2)
-                            .foregroundStyle(.secondary)
-                    }
+            VStack(spacing: 6) {
+                HStack(spacing: 8) {
+                    Image(systemName: "dot.radiowaves.left.and.right")
+                        .font(.caption)
+                        .foregroundStyle(.red)
+
+                    Text(stream.summary(showCategory: streamStore.settings.showStreamCategory))
+                        .font(.caption)
+                        .foregroundStyle(.secondary)
+                        .lineLimit(1)
 
                     Spacer()
 
                     Button(showPlayer ? "Hide" : "Watch") {
                         showPlayer.toggle()
                     }
-                    .font(.caption)
-                    .buttonStyle(.bordered)
-                    .controlSize(.small)
+                    .font(.caption.weight(.semibold))
+                    .buttonStyle(.plain)
                 }
 
                 if showPlayer {
@@ -54,9 +51,10 @@ struct StreamPanelView: View {
                     .clipShape(RoundedRectangle(cornerRadius: 8))
                 }
             }
-            .padding(8)
+            .padding(.horizontal, 8)
+            .padding(.vertical, 6)
             .background(Color.secondary.opacity(0.08))
-            .clipShape(RoundedRectangle(cornerRadius: 10))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
         }
     }
 }
