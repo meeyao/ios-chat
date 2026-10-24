@@ -79,6 +79,7 @@ private struct ContentView: View {
     @State private var didStartMonitoring = false
     @State private var showManagement = false
     @State private var showSettings = false
+    @State private var showChatSettings = false
     @State private var columnVisibility = NavigationSplitViewVisibility.all
     @SceneStorage("activeChannelId") private var storedActiveChannelId: String?
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -216,6 +217,21 @@ private struct ContentView: View {
         .sheet(isPresented: $showSettings) {
             AppSettingsView()
         }
+        .sheet(isPresented: $showChatSettings) {
+            NavigationStack {
+                ScrollView {
+                    ChatSettingsView(settings: chatSettings, roomStateContext: roomStateContext)
+                        .padding()
+                }
+                .navigationTitle("Chat Settings")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Done") { showChatSettings = false }
+                    }
+                }
+            }
+        }
         .sheet(item: Binding(
             get: { authManager.devicePrompt },
             set: { prompt in
@@ -328,10 +344,10 @@ private struct ContentView: View {
 
     private func connectIRC() {
         guard case let .signedIn(token) = authManager.state else { return }
-        let login = identityStore.user?.login ?? configuration.defaultNick
+        guard let user = identityStore.user else { return }
         let ircConfig = IRCConfiguration(
-            nickname: login,
-            user: login,
+            nickname: user.login,
+            user: user.login,
             oauthToken: token.accessToken
         )
         lastIRCConfiguration = ircConfig
@@ -376,16 +392,11 @@ private struct ContentView: View {
                 onManage: { showManagement = true }
             )
 
-            if channelStore.channels.isEmpty {
-                emptyStateView
+            if let channel = activeChannel {
+                channelDetail(for: channel)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             } else {
-                TabView(selection: activeChannelBinding) {
-                    ForEach(channelStore.channels) { channel in
-                        channelDetail(for: channel)
-                            .tag(Optional(channel.id))
-                    }
-                }
-                .tabViewStyle(.page(indexDisplayMode: .never))
+                emptyStateView
             }
         }
         .padding()
@@ -423,10 +434,22 @@ private struct ContentView: View {
     }
 
     private var headerView: some View {
-        VStack(alignment: .leading, spacing: 12) {
-            Text("DankChat iOS")
-                .font(.title2)
-                .bold()
+        VStack(alignment: .leading, spacing: 8) {
+            HStack {
+                Text("DankChat iOS")
+                    .font(.title3)
+                    .bold()
+
+                Spacer()
+
+                Button {
+                    showSettings = true
+                } label: {
+                    Image(systemName: "gearshape")
+                        .font(.title3)
+                }
+                .buttonStyle(.bordered)
+            }
 
             if !configuration.isConfigured {
                 Text("Add your Twitch Client ID in Settings → Twitch Login, then restart the app.")
@@ -434,48 +457,49 @@ private struct ContentView: View {
                     .foregroundStyle(.secondary)
             }
 
-            ConnectionStatusView(store: connectionStore)
-
-            VStack(alignment: .leading, spacing: 8) {
+            HStack(spacing: 8) {
+                ConnectionStatusView(store: connectionStore)
+                Spacer()
                 Text(authStateText)
-                    .font(.subheadline)
+                    .font(.caption)
+                    .foregroundStyle(.secondary)
+                    .lineLimit(1)
+            }
 
-                HStack {
+            HStack(spacing: 8) {
+                if isSignedIn {
+                    Button("Connect IRC") {
+                        connectIRC()
+                    }
+                    .buttonStyle(.borderedProminent)
+                    .disabled(identityStore.user == nil)
+
+                    Button("Disconnect") {
+                        connectionSupervisor.disconnect(reason: "User requested")
+                    }
+                    .buttonStyle(.bordered)
+                    .disabled(!isConnected)
+                } else {
                     Button("Sign In") {
                         authManager.beginLogin()
                     }
-                    .buttonStyle(.bordered)
+                    .buttonStyle(.borderedProminent)
                     .disabled(!configuration.isConfigured || isSigningIn)
 
-                    Button("Sign Out") {
-                        authManager.signOut()
+                    if isSigningIn {
+                        ProgressView()
+                            .controlSize(.small)
                     }
-                    .buttonStyle(.bordered)
-                    .disabled(!isSignedIn)
                 }
-            }
 
-            HStack {
-                Button("Connect IRC") {
-                    connectIRC()
-                }
-                .buttonStyle(.borderedProminent)
-                .disabled(!isSignedIn)
+                Spacer()
 
-                Button("Disconnect") {
-                    connectionSupervisor.disconnect(reason: "User requested")
+                Button("Sign Out") {
+                    authManager.signOut()
                 }
                 .buttonStyle(.bordered)
+                .disabled(!isSignedIn)
             }
-
-            ChatSettingsView(settings: chatSettings, roomStateContext: roomStateContext)
-
-            Button {
-                showSettings = true
-            } label: {
-                Label("Settings", systemImage: "gearshape")
-            }
-            .buttonStyle(.bordered)
         }
     }
 
@@ -502,12 +526,22 @@ private struct ContentView: View {
 
             StreamPanelView(channel: channel.id)
 
-            Picker("View", selection: $selectedDetailTab) {
-                ForEach(DetailTab.allCases) { tab in
-                    Text(tab.rawValue).tag(tab)
+            HStack(spacing: 8) {
+                Picker("View", selection: $selectedDetailTab) {
+                    ForEach(DetailTab.allCases) { tab in
+                        Text(tab.rawValue).tag(tab)
+                    }
                 }
+                .pickerStyle(.segmented)
+
+                Button {
+                    showChatSettings = true
+                } label: {
+                    Image(systemName: "slider.horizontal.3")
+                }
+                .buttonStyle(.bordered)
+                .accessibilityLabel("Chat settings")
             }
-            .pickerStyle(.segmented)
             .padding(.horizontal, 4)
 
             Group {
@@ -531,7 +565,8 @@ private struct ContentView: View {
                 guard let event = store.entries.last else { return }
                 handleIncomingEvent(event, channelId: channel.id)
             }
-            .frame(minHeight: 240)
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+            .layoutPriority(1)
 
             if chatSettings.showInput {
                 ChatComposerView(

@@ -223,6 +223,11 @@ struct DeviceLoginView: View {
 
 struct ChangelogView: View {
     private let entries: [(version: String, notes: [String])] = [
+        ("0.2.0", [
+            "Twitch device-code login and in-app Client ID",
+            "Fixed phone layout so chat scrolls",
+            "Single active channel view on iPhone"
+        ]),
         ("0.1.0", [
             "Native iOS app target and GitHub Actions build",
             "Highlights, ignored users, and local notifications",
