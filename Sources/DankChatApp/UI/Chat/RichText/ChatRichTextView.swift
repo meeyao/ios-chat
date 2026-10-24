@@ -24,7 +24,10 @@ struct ChatRichTextView: UIViewRepresentable {
     }
 
     func updateUIView(_ textView: UITextView, context: Context) {
-        let font = context.coordinator.messageFont(isAction: message.isAction)
+        let font = context.coordinator.messageFont(
+            isAction: message.isAction,
+            size: CGFloat(settings.fontSize)
+        )
         let builder = ChatRichTextBuilder(emoteStore: emoteStore)
         let configuration = ChatRichTextBuilder.Configuration(
             font: font,
@@ -60,8 +63,8 @@ struct ChatRichTextView: UIViewRepresentable {
             return false
         }
 
-        func messageFont(isAction: Bool) -> UIFont {
-            let baseFont = UIFont.preferredFont(forTextStyle: .subheadline)
+        func messageFont(isAction: Bool, size: CGFloat) -> UIFont {
+            let baseFont = UIFont.systemFont(ofSize: size)
             guard isAction else { return baseFont }
             guard let descriptor = baseFont.fontDescriptor.withSymbolicTraits(.traitItalic) else {
                 return baseFont

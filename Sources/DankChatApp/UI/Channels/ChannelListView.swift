@@ -25,7 +25,7 @@ struct ChannelListView: View {
             }
         }
         .toolbar {
-            ToolbarItem(placement: .topBarTrailing) {
+            ToolbarItem(placement: .navigationBarTrailing) {
                 Button {
                     onManage()
                 } label: {

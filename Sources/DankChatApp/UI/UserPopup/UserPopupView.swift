@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import DankChatCore
 
 /// A sheet that displays a user's profile, followage, and block controls.
@@ -20,6 +21,11 @@ struct UserPopupView: View {
     let currentUserId: String?
 
     @Environment(\.dismiss) private var dismiss
+    @EnvironmentObject private var whisperStore: WhisperStore
+    @EnvironmentObject private var notificationService: ChatNotificationService
+    @State private var copiedMention = false
+    @State private var showWhisperComposer = false
+    @State private var whisperText = ""
 
     var body: some View {
         NavigationStack {
@@ -28,6 +34,8 @@ struct UserPopupView: View {
                     headerSection
                     Divider()
                     followageSection
+                    Divider()
+                    interactionSection
                     Divider()
                     blockSection
 
@@ -40,7 +48,7 @@ struct UserPopupView: View {
             .navigationTitle("User Profile")
             .navigationBarTitleDisplayMode(.inline)
             .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
+                ToolbarItem(placement: .navigationBarTrailing) {
                     Button("Done") { dismiss() }
                 }
             }
@@ -178,6 +186,66 @@ struct UserPopupView: View {
                     .foregroundStyle(.secondary)
             }
         }
+    }
+
+    // MARK: - Interactions
+
+    @ViewBuilder
+    private var interactionSection: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text("Actions")
+                .font(.headline)
+
+            HStack {
+                Button {
+                    UIPasteboard.general.string = notificationService.settings.mentionFormat.mention(for: login)
+                    copiedMention = true
+                } label: {
+                    Label(copiedMention ? "Mention copied" : "Mention", systemImage: "at")
+                }
+                .buttonStyle(.bordered)
+
+                Button {
+                    showWhisperComposer = true
+                } label: {
+                    Label("Whisper", systemImage: "bubble.left.and.bubble.right")
+                }
+                .buttonStyle(.bordered)
+            }
+        }
+        .sheet(isPresented: $showWhisperComposer) {
+            NavigationStack {
+                Form {
+                    TextField("Message", text: $whisperText, axis: .vertical)
+                        .lineLimit(2...5)
+
+                    Button("Send Whisper") {
+                        Task {
+                            await whisperStore.sendWhisper(
+                                toUserId: targetUserId,
+                                toUserLogin: login,
+                                toUserName: displayName,
+                                text: whisperText
+                            )
+                            whisperText = ""
+                            showWhisperComposer = false
+                        }
+                    }
+                    .disabled(targetUserId.isEmpty || whisperText.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+                .navigationTitle("Whisper \(displayName)")
+                .navigationBarTitleDisplayMode(.inline)
+                .toolbar {
+                    ToolbarItem(placement: .navigationBarTrailing) {
+                        Button("Cancel") { showWhisperComposer = false }
+                    }
+                }
+            }
+        }
+    }
+
+    private var targetUserId: String {
+        store.profile?.id ?? userId ?? ""
     }
 
     // MARK: - Block

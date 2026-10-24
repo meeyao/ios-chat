@@ -21,7 +21,7 @@ struct ProviderOutageBannerView: View {
                 show(outage: latest)
             }
         }
-        .onChange(of: providerStatusStore.outages) { _, newValue in
+        .onChange(of: providerStatusStore.outages) { newValue in
             guard let latest = newValue.first else { return }
             if latest.id != activeOutage?.id {
                 show(outage: latest)

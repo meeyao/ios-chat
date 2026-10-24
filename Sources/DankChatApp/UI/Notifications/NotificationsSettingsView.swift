@@ -6,25 +6,17 @@ struct NotificationsSettingsView: View {
     @EnvironmentObject private var notificationService: ChatNotificationService
     @EnvironmentObject private var highlightStore: HighlightStore
     @EnvironmentObject private var ignoreStore: IgnoreStore
-    @Environment(\.dismiss) private var dismiss
 
     var body: some View {
-        NavigationStack {
-            List {
-                notificationsSection
-                highlightsSection
-                ignoresSection
-            }
-            .navigationTitle("Notifications & Highlights")
-            .navigationBarTitleDisplayMode(.inline)
-            .toolbar {
-                ToolbarItem(placement: .topBarTrailing) {
-                    Button("Done") { dismiss() }
-                }
-            }
-            .task {
-                await notificationService.refreshAuthorization()
-            }
+        List {
+            notificationsSection
+            highlightsSection
+            ignoresSection
+        }
+        .navigationTitle("Notifications & Highlights")
+        .navigationBarTitleDisplayMode(.inline)
+        .task {
+            await notificationService.refreshAuthorization()
         }
     }
 

@@ -27,6 +27,18 @@ struct ChatSettingsView: View {
                     Toggle("Show Timestamps", isOn: $settings.showTimestamps)
                     Toggle("Show Usernames", isOn: $settings.showUsernames)
                     Toggle("Animate Emotes", isOn: $settings.allowAnimatedEmotes)
+                    Toggle("Line Separators", isOn: $settings.lineSeparator)
+                    Toggle("Checkered Messages", isOn: $settings.checkeredMessages)
+
+                    Stepper(value: $settings.fontSize, in: 10...28, step: 1) {
+                        HStack {
+                            Text("Font Size")
+                            Spacer()
+                            Text("\(settings.fontSize)")
+                                .font(.subheadline)
+                                .foregroundStyle(.secondary)
+                        }
+                    }
 
                     Stepper(value: $settings.scrollbackLimit, in: 100...2000, step: 50) {
                         HStack {
@@ -217,7 +229,7 @@ struct RoomStateControlsView: View {
         .onAppear {
             syncLocalState()
         }
-        .onChange(of: roomState) { _, newState in
+        .onChange(of: roomState) { newState in
             syncLocalStateFrom(newState)
         }
     }

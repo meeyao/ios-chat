@@ -26,6 +26,16 @@ struct ChatTimelineView: View {
                         let event = store.entries[index]
                         let entryId = entryId(for: index, event: event)
                         row(for: event)
+                            .background {
+                                if settings.checkeredMessages, !index.isMultiple(of: 2) {
+                                    Color.secondary.opacity(0.05)
+                                }
+                            }
+                            .overlay(alignment: .bottom) {
+                                if settings.lineSeparator {
+                                    Divider()
+                                }
+                            }
                             .id(entryId)
                             .background(
                                 GeometryReader { geometry in
@@ -57,9 +67,9 @@ struct ChatTimelineView: View {
                 .padding(.vertical, 8)
                 .padding(.horizontal, 12)
             }
-            .background(Color(uiColor: .secondarySystemBackground))
+            .background(settings.trueDarkTheme ? Color.black : Color(uiColor: .secondarySystemBackground))
             .clipShape(RoundedRectangle(cornerRadius: 12, style: .continuous))
-            .onChange(of: store.entries.count) { _, _ in
+            .onChange(of: store.entries.count) { _ in
                 if isAtBottom {
                     scrollToLatest(using: proxy)
                 }
@@ -112,7 +122,7 @@ struct ChatTimelineView: View {
             }
 
             Text(message.text)
-                .font(.caption)
+                .font(.system(size: max(10, CGFloat(settings.fontSize) - 2)))
                 .foregroundStyle(.secondary)
         }
         .frame(maxWidth: .infinity, alignment: .leading)

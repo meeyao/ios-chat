@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 import DankChatCore
 
 @main
@@ -77,8 +78,7 @@ private struct ContentView: View {
     @State private var chatSession: ChatSession?
     @State private var didStartMonitoring = false
     @State private var showManagement = false
-    @State private var showNotificationSettings = false
-    @State private var showToolsSettings = false
+    @State private var showSettings = false
     @State private var columnVisibility = NavigationSplitViewVisibility.all
     @SceneStorage("activeChannelId") private var storedActiveChannelId: String?
     @Environment(\.horizontalSizeClass) private var horizontalSizeClass
@@ -205,6 +205,7 @@ private struct ContentView: View {
         .environmentObject(userProfileStore)
         .environmentObject(moderationContext)
         .environmentObject(commandStore)
+        .environmentObject(chatSettings)
         .environmentObject(highlightStore)
         .environmentObject(ignoreStore)
         .environmentObject(notificationService)
@@ -212,13 +213,8 @@ private struct ContentView: View {
         .environmentObject(recentUploadsStore)
         .environmentObject(streamStore)
         .environmentObject(ttsService)
-        .sheet(isPresented: $showNotificationSettings) {
-            NotificationsSettingsView()
-        }
-        .sheet(isPresented: $showToolsSettings) {
-            NavigationStack {
-                ToolsSettingsView()
-            }
+        .sheet(isPresented: $showSettings) {
+            AppSettingsView()
         }
         .sheet(isPresented: $showManagement) {
             ChannelManagementView(
@@ -232,6 +228,7 @@ private struct ContentView: View {
                 didStartMonitoring = true
                 connectionSupervisor.startMonitoring()
                 streamStore.updateChannels(channelStore.channels.map(\.id))
+                UIApplication.shared.isIdleTimerDisabled = chatSettings.keepScreenOn
                 await notificationService.requestAuthorization()
                 authManager.restoreSession()
                 await authManager.refreshIfNeeded()
@@ -240,7 +237,7 @@ private struct ContentView: View {
                 }
             }
         }
-        .onChange(of: authManager.state) { _, newState in
+        .onChange(of: authManager.state) { newState in
             switch newState {
             case .signedIn:
                 Task { await identityStore.refresh() }
@@ -254,7 +251,7 @@ private struct ContentView: View {
                 break
             }
         }
-        .onChange(of: identityStore.user) { _, newUser in
+        .onChange(of: identityStore.user) { newUser in
             if let user = newUser {
                 whisperStore.start(userId: user.id, userLogin: user.login, userName: user.displayName)
             } else {
@@ -262,13 +259,13 @@ private struct ContentView: View {
             }
             resolveBroadcasterIdIfNeeded()
         }
-        .onChange(of: channelStore.channels) { _, _ in
+        .onChange(of: channelStore.channels) { _ in
             syncActiveChannel()
             syncConnectionStates()
             refreshProviders()
             streamStore.updateChannels(channelStore.channels.map(\.id))
         }
-        .onChange(of: channelStore.activeChannelId) { _, newValue in
+        .onChange(of: channelStore.activeChannelId) { newValue in
             storedActiveChannelId = newValue
             if let id = newValue {
                 channelStore.markChannelRead(channelId: id)
@@ -276,9 +273,13 @@ private struct ContentView: View {
             refreshProviders()
             resolveBroadcasterIdIfNeeded()
         }
-        .onChange(of: connectionStore.state) { _, _ in
+        .onChange(of: connectionStore.state) { _ in
             syncConnectionStates()
         }
+        .onChange(of: chatSettings.keepScreenOn) { newValue in
+            UIApplication.shared.isIdleTimerDisabled = newValue
+        }
+        .preferredColorScheme(chatSettings.theme.colorScheme)
     }
 
     private var isSigningIn: Bool {
@@ -288,6 +289,11 @@ private struct ContentView: View {
 
     private var isSignedIn: Bool {
         if case .signedIn = authManager.state { return true }
+        return false
+    }
+
+    private var isConnected: Bool {
+        if case .connected = connectionStore.state { return true }
         return false
     }
 
@@ -452,21 +458,12 @@ private struct ContentView: View {
 
             ChatSettingsView(settings: chatSettings, roomStateContext: roomStateContext)
 
-            HStack {
-                Button {
-                    showNotificationSettings = true
-                } label: {
-                    Label("Alerts", systemImage: "bell.badge")
-                }
-                .buttonStyle(.bordered)
-
-                Button {
-                    showToolsSettings = true
-                } label: {
-                    Label("Tools", systemImage: "wrench.and.screwdriver")
-                }
-                .buttonStyle(.bordered)
+            Button {
+                showSettings = true
+            } label: {
+                Label("Settings", systemImage: "gearshape")
             }
+            .buttonStyle(.bordered)
         }
     }
 
@@ -518,17 +515,20 @@ private struct ContentView: View {
                     WhispersTabView()
                 }
             }
-            .onChange(of: store.entries.count) { _, _ in
+            .onChange(of: store.entries.count) { _ in
                 guard let event = store.entries.last else { return }
                 handleIncomingEvent(event, channelId: channel.id)
             }
             .frame(minHeight: 240)
 
-            ChatComposerView(
-                connectionStore: connectionStore,
-                session: chatSession,
-                channel: channel.id
-            )
+            if chatSettings.showInput {
+                ChatComposerView(
+                    connectionStore: connectionStore,
+                    session: chatSession,
+                    channel: channel.id
+                )
+                .disabled(chatSettings.autoDisableInput && !isConnected)
+            }
         }
     }
 

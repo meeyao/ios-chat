@@ -114,13 +114,13 @@ struct ChatComposerView: View {
         .sheet(isPresented: $isShowingCommandManagement) {
             CommandManagementView(commandStore: commandStore)
         }
-        .onChange(of: messageText) { _, newValue in
+        .onChange(of: messageText) { newValue in
             scheduleCommandSuggestions(for: newValue)
         }
-        .onChange(of: identityStore.user?.login ?? "") { _, _ in
+        .onChange(of: identityStore.user?.login ?? "") { _ in
             scheduleCommandSuggestions(for: messageText)
         }
-        .onChange(of: selectedPhoto) { _, item in
+        .onChange(of: selectedPhoto) { item in
             guard let item else { return }
             Task { await uploadPhoto(item) }
         }
